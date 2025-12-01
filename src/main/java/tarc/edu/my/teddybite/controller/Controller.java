@@ -1,14 +1,15 @@
+package tarc.edu.my.teddybite.controller;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package tarc.edu.my.view;
 
 /**
  *
  * @author ASUS
  */
-public class View
+public class Controller
 {
 
 }

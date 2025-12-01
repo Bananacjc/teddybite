@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import java.util.HashMap;
 import tarc.edu.my.teddybite.util.ColorCode;
 import tarc.edu.my.teddybite.util.ColorCode;
-import tarc.edu.my.model.Item;
+import tarc.edu.my.teddybite.model.Item;
 
 /**
  *

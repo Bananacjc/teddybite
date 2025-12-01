@@ -1,4 +1,4 @@
-package tarc.edu.my.model;
+package tarc.edu.my.teddybite.model;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
