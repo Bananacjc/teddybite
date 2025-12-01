@@ -2,21 +2,22 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package tarc.edu.my.teddybite.payment;
+package tarc.edu.my.teddybite;
 
 /**
  *
  * @author CHEONG JAU CHUN
  */
-public class CreditPayment extends Payment
+public class CashPayment extends Payment
 {
 
-    public CreditPayment()
+    public CashPayment()
     {
+        // Prevent all null pointer reference
         this(0f);
     }
 
-    public CreditPayment(double paymentAmount)
+    public CashPayment(double paymentAmount)
     {
         super(paymentAmount);
     }

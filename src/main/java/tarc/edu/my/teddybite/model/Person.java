@@ -1,4 +1,4 @@
-package tarc.edu.my.teddybite.util;
+package tarc.edu.my.teddybite.model;
 
 import java.time.LocalDate;
 

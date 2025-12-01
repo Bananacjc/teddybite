@@ -1,4 +1,4 @@
-package tarc.edu.my.teddybite.core;
+package tarc.edu.my.teddybite.model;
 
 /**
  *

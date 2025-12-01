@@ -1,4 +1,4 @@
-package tarc.edu.my.teddybite.core;
+package tarc.edu.my.teddybite.model;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 import tarc.edu.my.teddybite.util.ColorCode;
-import tarc.edu.my.teddybite.util.Remark;
 import tarc.edu.my.teddybite.util.ValidationMethod;
 
 /**

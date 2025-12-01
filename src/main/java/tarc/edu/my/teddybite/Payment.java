@@ -2,14 +2,14 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package tarc.edu.my.teddybite.payment;
+package tarc.edu.my.teddybite;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.HashMap;
 import tarc.edu.my.teddybite.util.ColorCode;
 import tarc.edu.my.teddybite.util.ColorCode;
-import tarc.edu.my.teddybite.core.Item;
+import tarc.edu.my.teddybite.model.Item;
 
 /**
  *
