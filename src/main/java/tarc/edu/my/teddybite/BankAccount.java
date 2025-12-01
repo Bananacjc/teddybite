@@ -1,4 +1,4 @@
-package tarc.edu.my.teddybite.payment;
+package tarc.edu.my.teddybite;
 
 import tarc.edu.my.teddybite.util.ColorCode;
 
