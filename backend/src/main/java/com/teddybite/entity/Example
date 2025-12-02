@@ -1,0 +1,274 @@
+package com.scorikun.scorify.entity.pojo;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+@Entity
+@Table(name = "results")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Result {
+
+    @Id
+    @Column(name = "result_id", length = 20)
+    private String resultId;
+
+    @Column(name = "user_id", nullable = false, length = 20)
+    private String userId;
+
+    @Column(name = "course_code", nullable = false, length = 20)
+    private String courseCode;
+
+    @Column(name = "program_level", nullable = false, length = 11)
+    private String programLevel;
+
+    @Column(name = "year_sem", nullable = false, length = 5)
+    private String yearSem;
+
+    @Column(name = "assignment")
+    private Double assignment;
+
+    @Column(name = "midterm")
+    private Double midterm;
+
+    @Column(name = "practical")
+    private Double practical;
+
+    @Column(name = "coursework")
+    private Double coursework;
+
+    @Column(name = "assignment_weight")
+    private Integer assignmentWeight;
+
+    @Column(name = "midterm_weight")
+    private Integer midtermWeight;
+
+    @Column(name = "practical_weight")
+    private Integer practicalWeight;
+
+    @Column(name = "coursework_weight")
+    private Integer courseworkWeight;
+
+    @Column(name = "grade", length = 3)
+    private String grade;
+
+    @Column(name = "credit_hour")
+    private Integer creditHour;
+
+    @Column(name = "is_target")
+    private Boolean isTarget;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    /* ---------- COMPUTED, NOT PERSISTED ---------- */
+    
+    /**
+     * Coursework score = weighted average of assignment, midterm, practical
+     * Example: (90*60% + 92*20% + 85*20%) / 100 = 89.4
+     */
+    @Transient @JsonProperty("courseworkScore")
+    public Double getCourseworkScore() {
+        // If all components are null, can't compute
+        boolean hasAny = assignment != null || midterm != null || practical != null;
+        if (!hasAny) return null;
+        
+        double sum = 0.0;
+        if (assignment != null && assignmentWeight != null) {
+            sum += assignment * assignmentWeight / 100.0;
+        }
+        if (midterm != null && midtermWeight != null) {
+            sum += midterm * midtermWeight / 100.0;
+        }
+        if (practical != null && practicalWeight != null) {
+            sum += practical * practicalWeight / 100.0;
+        }
+        return roundToHalf(sum);
+    }
+
+    /**
+     * Coursework weight = user-entered coursework weight (or sum of component weights if not specified)
+     * This represents the total weight of the coursework section
+     */
+    @Transient @JsonProperty("courseworkWeight")
+    public Integer getCourseworkWeight() {
+        // If user explicitly entered courseworkWeight, use that
+        if (courseworkWeight != null && courseworkWeight > 0) {
+            return courseworkWeight;
+        }
+        // Otherwise, calculate as sum of component weights
+        Integer a = assignmentWeight;
+        Integer m = midtermWeight;
+        Integer p = practicalWeight;
+        int sum = (a == null ? 0 : a) + (m == null ? 0 : m) + (p == null ? 0 : p);
+        return sum > 0 ? sum : null;
+    }
+
+    /**
+     * Final/Exam weight = 100 - coursework weight
+     * Example: 100 - 100 = 0 (no final exam)
+     * Or: 100 - 60 = 40 (40% is final exam)
+     */
+    @Transient @JsonProperty("finalWeight")
+    public Integer getFinalWeight() {
+        Integer cw = getCourseworkWeight();
+        if (cw == null) return null;
+        int finalW = 100 - cw;
+        return finalW > 0 ? finalW : null;
+    }
+
+    @Transient @JsonProperty("assignmentNeeded")
+    public Double getAssignmentNeeded() {
+        if (!Boolean.TRUE.equals(isTarget)) return null;
+        if (assignmentWeight == null || assignmentWeight <= 0) return null;
+        if (assignment != null) return null;
+        
+        return getClampedCourseworkNeeded();
+    }
+
+    @Transient @JsonProperty("midtermNeeded")
+    public Double getMidtermNeeded() {
+        if (!Boolean.TRUE.equals(isTarget)) return null;
+        if (midtermWeight == null || midtermWeight <= 0) return null;
+        if (midterm != null) return null;
+        
+        return getClampedCourseworkNeeded();
+    }
+
+    @Transient @JsonProperty("practicalNeeded")
+    public Double getPracticalNeeded() {
+        if (!Boolean.TRUE.equals(isTarget)) return null;
+        if (practicalWeight == null || practicalWeight <= 0) return null;
+        if (practical != null) return null;
+        
+        return getClampedCourseworkNeeded();
+    }
+
+    /**
+     * Final needed = required score on final to reach target grade
+     */
+    @Transient @JsonProperty("finalNeeded")
+    public Double getFinalNeeded() {
+        if (!Boolean.TRUE.equals(isTarget)) return null;
+        Integer finalW = getFinalWeight();
+        if (finalW == null || finalW <= 0) return null;
+        if (coursework != null) return null; // already has final score
+        
+        Double target = getTargetPercent();
+        Integer cw = getCourseworkWeight();
+        if (target == null || cw == null || cw <= 0) return null;
+        
+        // Calculate Projected Coursework Score
+        double kcc = 0.0;
+        int uw = 0;
+        
+        if (assignment != null && assignmentWeight != null) {
+            kcc += assignment * assignmentWeight / 100.0;
+        } else if (assignmentWeight != null && assignmentWeight > 0) {
+            uw += assignmentWeight;
+        }
+        
+        if (midterm != null && midtermWeight != null) {
+            kcc += midterm * midtermWeight / 100.0;
+        } else if (midtermWeight != null && midtermWeight > 0) {
+            uw += midtermWeight;
+        }
+        
+        if (practical != null && practicalWeight != null) {
+            kcc += practical * practicalWeight / 100.0;
+        } else if (practicalWeight != null && practicalWeight > 0) {
+            uw += practicalWeight;
+        }
+        
+        double neededCW = 0.0;
+        if (uw > 0) {
+            neededCW = (target - kcc) * 100.0 / uw;
+            if (neededCW < 0) neededCW = 0.0;
+            if (neededCW > 100) neededCW = 100.0;
+        }
+        
+        double pcs = kcc + (neededCW * uw / 100.0);
+        
+        // Calculate Final Needed
+        // target = (pcs * cw/100) + (final * fw/100)
+        double needed = (target - (pcs * cw / 100.0)) * 100.0 / finalW;
+        
+        if (needed < 0) needed = 0.0;
+        // Do not cap final needed at 100, so UI can show unreachable
+        
+        return roundToHalf(needed);
+    }
+
+    private Double getClampedCourseworkNeeded() {
+        Double target = getTargetPercent();
+        if (target == null) return null;
+
+        double kcc = 0.0;
+        int uw = 0;
+
+        if (assignment != null && assignmentWeight != null) {
+            kcc += assignment * assignmentWeight / 100.0;
+        } else if (assignmentWeight != null && assignmentWeight > 0) {
+            uw += assignmentWeight;
+        }
+
+        if (midterm != null && midtermWeight != null) {
+            kcc += midterm * midtermWeight / 100.0;
+        } else if (midtermWeight != null && midtermWeight > 0) {
+            uw += midtermWeight;
+        }
+
+        if (practical != null && practicalWeight != null) {
+            kcc += practical * practicalWeight / 100.0;
+        } else if (practicalWeight != null && practicalWeight > 0) {
+            uw += practicalWeight;
+        }
+
+        if (uw == 0) return null;
+
+        double needed = (target - kcc) * 100.0 / uw;
+        if (needed < 0) needed = 0.0;
+        if (needed > 100) needed = 100.0;
+        
+        return roundToHalf(needed);
+    }
+
+    @Transient @JsonProperty("targetPercent")
+    public Double getTargetPercent() {
+        return gradeToTargetPercent(grade);
+    }
+
+    private static Double roundToHalf(Double v) {
+        return v == null ? null : Math.round(v * 2) / 2.0;
+    }
+
+    private static Double gradeToTargetPercent(String grade) {
+        if (grade == null) return null;
+        switch (grade) {
+            case "A+": return 90.0;
+            case "A":  return 80.0;
+            case "A-": return 75.0;
+            case "B+": return 70.0;
+            case "B":  return 65.0;
+            case "B-": return 60.0;
+            case "C+": return 55.0;
+            case "C":  return 50.0;
+            default:   return null;
+        }
+    }
+}

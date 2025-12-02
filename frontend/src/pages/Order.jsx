@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Order.css';
+import '../../css/Order.css';
 import logo from '../assets/logo.png';
 
 // Mock Data

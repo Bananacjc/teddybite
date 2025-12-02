@@ -1,0 +1,44 @@
+package com.scorikun.scorify.service;
+
+import com.scorikun.scorify.entity.pojo.Result;
+import com.scorikun.scorify.repository.ResultRepository;
+import com.scorikun.scorify.utils.HashIdGenerator;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class ResultService {
+
+    private final ResultRepository resultRepository;
+
+    public ResultService(ResultRepository resultRepository) {
+        this.resultRepository = resultRepository;
+    }
+
+    public List<Result> getResultsByUser(String userId) {
+        return resultRepository.findByUserId(userId);
+    }
+
+    public List<Result> getResultsByUserProgramSem(String userId, String programLevel, String yearSem) {
+        return resultRepository.findByUserIdAndProgramLevelAndYearSem(userId, programLevel, yearSem);
+    }
+
+    public Optional<Result> getResultById(String id) {
+        return resultRepository.findById(id);
+    }
+
+    public Result saveResult(Result result) {
+        // Only generate a new id when one is not provided (create vs update)
+        if (result.getResultId() == null || result.getResultId().isEmpty()) {
+            result.setResultId(HashIdGenerator.generateId());
+        }
+        return resultRepository.save(result);
+    }
+
+    public void deleteResult(String id) {
+        resultRepository.deleteById(id);
+    }
+}
