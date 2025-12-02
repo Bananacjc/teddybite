@@ -49,12 +49,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Firebase (needed for FirebaseConfig) -->
+        <!-- Jakarta -->
         <dependency>
-            <groupId>com.google.firebase</groupId>
-            <artifactId>firebase-admin</artifactId>
-            <version>9.2.0</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jpa</artifactId>
         </dependency>
+
     </dependencies>
 
     <build>
