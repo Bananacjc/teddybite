@@ -49,12 +49,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Jakarta -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-jpa</artifactId>
-        </dependency>
-
     </dependencies>
 
     <build>
