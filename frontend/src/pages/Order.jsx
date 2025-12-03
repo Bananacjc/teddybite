@@ -27,6 +27,7 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 import { SearchIcon, AddIcon, MinusIcon, DeleteIcon } from '@chakra-ui/icons';
 import { 
@@ -40,6 +41,7 @@ import {
   ShoppingCart,
   Star
 } from 'lucide-react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.png';
 
@@ -70,7 +72,7 @@ const MENU_ITEMS = [
   { id: 10, category: 'dessert', name: 'Choco Lava', price: 6.50, image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=500&q=60', desc: 'Warm chocolate cake with molten center', rating: 5.0 },
 ];
 
-const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total }) => (
+const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, onCheckout }) => (
   <Flex
     direction="column"
     h="full"
@@ -193,6 +195,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total }) 
         _active={{ transform: 'translateY(0)' }}
         leftIcon={<CreditCard size={20} />}
         isDisabled={cart.length === 0}
+        onClick={onCheckout}
       >
         Checkout
       </Button>
@@ -206,8 +209,56 @@ const OrderPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const theme = useTheme();
+  const toast = useToast();
 
-  const filteredItems = MENU_ITEMS.filter(item => 
+  const handleCheckout = async () => {
+    const orderData = {
+      orderItems: cart.map(item => ({
+        itemId: item.id.toString(),
+        itemName: item.name,
+        unitPrice: item.price,
+        quantity: item.qty,
+        lineTotal: parseFloat((item.price * item.qty).toFixed(2))
+      })),
+      subTotal: subtotal,
+      tax: tax,
+      totalAmount: total,
+      payment: {
+        method: "CASH",
+        transactionId: "TX" + Date.now().toString().slice(-6),
+        amount: total,
+        status: "Paid"
+      },
+      status: "Completed",
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const response = await axios.post('http://localhost:8081/api/orders', orderData);
+
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Order ID: ${response.data.id}`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+      setCart([]);
+    } catch (error) {
+      console.error("Order Error:", error);
+      toast({
+        title: "Connection Error",
+        description: error.response?.data?.message || "Could not connect to the backend server. Make sure it's running!",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    }
+  };
+
+  const filteredItems = MENU_ITEMS.filter(item =>  
     item.category === activeCategory && 
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -442,6 +493,7 @@ const OrderPage = () => {
           subtotal={subtotal} 
           tax={tax} 
           total={total} 
+          onCheckout={handleCheckout}
         />
       </Flex>
 
@@ -458,6 +510,7 @@ const OrderPage = () => {
               subtotal={subtotal} 
               tax={tax} 
               total={total} 
+              onCheckout={handleCheckout}
             />
           </DrawerBody>
         </DrawerContent>
