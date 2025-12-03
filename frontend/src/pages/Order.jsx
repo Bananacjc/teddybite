@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -39,11 +40,12 @@ import {
   Receipt, 
   CreditCard, 
   ShoppingCart,
-  Star
+  Star,
+  ArrowLeft
 } from 'lucide-react';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.png';
+import { createOrder } from '../api/orders';
 
 // Motion Components
 const MotionBox = motion(Box);
@@ -210,6 +212,7 @@ const OrderPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const theme = useTheme();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const handleCheckout = async () => {
     const orderData = {
@@ -234,11 +237,11 @@ const OrderPage = () => {
     };
 
     try {
-      const response = await axios.post('http://localhost:8081/api/orders', orderData);
+      const data = await createOrder(orderData);
 
       toast({
         title: "Order Placed Successfully!",
-        description: `Order ID: ${response.data.id}`,
+        description: `Order ID: ${data.id}`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -309,6 +312,18 @@ const OrderPage = () => {
         position={{ base: 'fixed', md: 'relative' }}
         bottom={{ base: 0, md: 'auto' }}
       >
+        {/* Back to Dashboard */}
+        <Tooltip label="Back to Dashboard" placement="right" hasArrow bg="brown.800" color="brand.500">
+          <IconButton
+            icon={<ArrowLeft size={24} />}
+            variant="ghost"
+            color="brand.500"
+            onClick={() => navigate('/dashboard')}
+            mb={{ base: 0, md: 4 }}
+            _hover={{ bg: 'brown.800', transform: 'scale(1.1)' }}
+          />
+        </Tooltip>
+
         <Box mb={{ base: 0, md: 10 }} p={2} bg="brand.500" borderRadius="full" boxShadow="md" display={{ base: 'none', md: 'block' }}>
           <Image src={logo} boxSize="45px" objectFit="contain" />
         </Box>
