@@ -20,7 +20,7 @@ public class OrderController {
     public ResponseEntity<Order> createOrder(@RequestBody Order order) {
         // Set server-side fields if missing
         if (order.getCreatedAt() == null) {
-            order.setCreatedAt(LocalDateTime.now().toString());
+            order.setCreatedAt(LocalDateTime.now()  );
         }
         
         // Generate IDs if missing (for demo purposes)

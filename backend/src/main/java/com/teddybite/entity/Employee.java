@@ -1,27 +1,25 @@
 package com.teddybite.entity;
 
-import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import java.time.LocalDateTime;
 
 /**
- * The concrete Employee class
+ * The Employee class
  */
-@Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Employee extends Person{
-
+@Data
+@Document(collection = "employees")
+public class Employee{
+    @Id
     private String employeeID;
+    private String name;
     private Gender gender;
-    private String position;
+    private LocalDateTime DOB;
+    private String contactNo;
+    private String email;
+    private LocalDateTime dateJoined;
+    private EmployeePosition position;
     private double salary;
-
-
 }
