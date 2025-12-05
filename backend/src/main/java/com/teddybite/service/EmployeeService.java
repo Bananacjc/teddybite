@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.teddybite.entity.Employee;
 import com.teddybite.repository.EmployeeRepository;
 
+@Service
 public class EmployeeService implements IEmployeeService{
     
     @Autowired
