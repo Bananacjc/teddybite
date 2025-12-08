@@ -313,7 +313,7 @@ const OrderPage = () => {
         bottom={{ base: 0, md: 'auto' }}
       >
         {/* Back to Dashboard */}
-        <Tooltip label="Back to Dashboard" placement="right" hasArrow bg="brown.800" color="brand.500">
+        {/* <Tooltip label="Back to Dashboard" placement="right" hasArrow bg="brown.800" color="brand.500">
           <IconButton
             icon={<ArrowLeft size={24} />}
             variant="ghost"
@@ -322,7 +322,7 @@ const OrderPage = () => {
             mb={{ base: 0, md: 4 }}
             _hover={{ bg: 'brown.800', transform: 'scale(1.1)' }}
           />
-        </Tooltip>
+        </Tooltip> */}
 
         <Box mb={{ base: 0, md: 10 }} p={2} bg="brand.500" borderRadius="full" boxShadow="md" display={{ base: 'none', md: 'block' }}>
           <Image src={logo} boxSize="45px" objectFit="contain" />

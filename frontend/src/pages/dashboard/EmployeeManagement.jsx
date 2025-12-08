@@ -7,6 +7,14 @@ import {
 import { AddIcon } from '@chakra-ui/icons';
 import { getAllEmployees, createEmployee, deleteEmployee } from '../../api/employees';
 
+const POSITION_SALARIES = {
+  MANAGER: 4500,
+  CASHIER: 3800,
+  CHEF: 3500,
+  WAITER: 3000,
+  CLEANER: 2800
+};
+
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +28,7 @@ const EmployeeManagement = () => {
     contactNo: '',
     gender: 'MALE',
     position: 'WAITER',
-    salary: '',
+    salary: POSITION_SALARIES['WAITER'],
     dob: '',
     dateJoined: new Date().toISOString().split('T')[0]
   });
@@ -48,10 +56,19 @@ const EmployeeManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'position') {
+      setFormData(prev => ({
+        ...prev,
+        position: value,
+        salary: POSITION_SALARIES[value] || 0
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -81,7 +98,7 @@ const EmployeeManagement = () => {
         contactNo: '',
         gender: 'MALE',
         position: 'WAITER',
-        salary: '',
+        salary: POSITION_SALARIES['WAITER'],
         dob: '',
         dateJoined: new Date().toISOString().split('T')[0]
       });
@@ -195,7 +212,7 @@ const EmployeeManagement = () => {
               </FormControl>
               <FormControl isRequired>
                 <FormLabel>Salary (RM)</FormLabel>
-                <Input name="salary" type="number" value={formData.salary} onChange={handleInputChange} />
+                <Input name="salary" type="number" value={formData.salary} isReadOnly bg="gray.100" />
               </FormControl>
               <FormControl>
                 <FormLabel>Date of Birth</FormLabel>
