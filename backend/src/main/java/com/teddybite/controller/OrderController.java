@@ -1,40 +1,75 @@
 package com.teddybite.controller;
 
+import com.teddybite.dto.OrderDTO;
 import com.teddybite.entity.Order;
 import com.teddybite.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.teddybite.service.IOrderService;
+
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final IOrderService orderService;
+
+    public OrderController(IOrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        // Set server-side fields if missing
-        if (order.getCreatedAt() == null) {
-            order.setCreatedAt(LocalDateTime.now()  );
-        }
+    public ResponseEntity<Order> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
         
-        // Generate IDs if missing (for demo purposes)
-        if (order.getPayment() != null && order.getPayment().getTransactionId() == null) {
-            order.getPayment().setTransactionId(UUID.randomUUID().toString().substring(0, 8));
-        }
-        
-        Order savedOrder = orderRepository.save(order);
-        return ResponseEntity.ok(savedOrder);
+        Order savedOrder = orderService.createOrder(orderDTO);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedOrder.getOrderId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedOrder);
     }
     
     @GetMapping
-    public ResponseEntity<Iterable<Order>> getAllOrders() {
-        return ResponseEntity.ok(orderRepository.findAll());
+    public List<Order> findAll() {
+        return orderService.readOrderAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> findById(@PathVariable String id) {
+        return ResponseEntity.of(orderService.readOrderById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Order> updateOrder(@PathVariable String id, @Valid @RequestBody OrderDTO updateDTO) {
+        return orderService.readOrderById(id)
+                .map(currentOrder -> {
+                    currentOrder.setOrderItems(updateDTO.getOrderItems());
+                    currentOrder.setPaymentId(updateDTO.getPaymentId());
+
+                    Order updateOrder = orderService.updateOrder(currentOrder);
+
+                    return ResponseEntity.ok(updateOrder);
+                })
+                .orElse(ResponseEntity.notFound().build());
+                
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable String id) {
+        if (orderService.readOrderById(id).isPresent()) {
+            orderService.deleteOrderById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/health")
