@@ -1,15 +1,14 @@
 package com.teddybite.entity;
 
 import lombok.Data;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Document(collection = "payments")
 public class Payment {
-    private String method;
-    private String transactionId;
-    private double amount;
-    private String status;
+    @Id
+    private String paymentId;
+    private double paymentAmount;
 }

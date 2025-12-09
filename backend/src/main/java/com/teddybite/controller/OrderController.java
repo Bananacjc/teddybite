@@ -2,7 +2,6 @@ package com.teddybite.controller;
 
 import com.teddybite.dto.OrderDTO;
 import com.teddybite.entity.Order;
-import com.teddybite.repository.OrderRepository;
 import com.teddybite.service.IOrderService;
 
 import jakarta.validation.Valid;
