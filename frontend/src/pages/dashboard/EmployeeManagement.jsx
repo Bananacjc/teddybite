@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Heading, SimpleGrid, Card, CardBody, Avatar, Text, Badge, HStack, Button,
+  Box, Heading, Button,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel, Input, Select, useDisclosure, useToast,
-  FormErrorMessage, InputGroup, InputRightElement, IconButton
+  FormErrorMessage, InputGroup, InputRightElement, IconButton,
+  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon
 } from '@chakra-ui/react';
-import { AddIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
-import { getAllEmployees, createEmployee, deleteEmployee } from '../../api/employees';
-
-const POSITION_SALARIES = {
-  MANAGER: 4500,
-  CASHIER: 3800,
-  CHEF: 3500,
-  WAITER: 3000,
-  CLEANER: 2800
-};
+import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon } from '@chakra-ui/icons';
+import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, getEmployeePositions } from '../../api/employees';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
+  const [positions, setPositions] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -26,31 +20,50 @@ const EmployeeManagement = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  // Search and Sort State
+  const [filters, setFilters] = useState({
+    name: '',
+    position: '',
+    salary: '',
+    email: '',
+    contactNo: '',
+    dob: '',
+    dateJoined: ''
+  });
+  const [activeSearches, setActiveSearches] = useState({}); // { name: true, email: false }
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
   // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     contactNo: '',
-    gender: 'MALE',
-    position: 'WAITER',
-    salary: POSITION_SALARIES['WAITER'],
+    gender: '',
+    position: '',
+    salary: 0,
     dob: '',
     password: '',
     confirmPassword: ''
   });
 
   useEffect(() => {
-    fetchEmployees();
+    fetchData();
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchData = async () => {
     try {
-      const data = await getAllEmployees();
-      setEmployees(data);
+      const [empData, posData] = await Promise.all([
+        getAllEmployees(),
+        getEmployeePositions()
+      ]);
+      setEmployees(empData);
+      setPositions(posData);
     } catch (error) {
       toast({
-        title: "Error fetching employees",
+        title: "Error fetching data",
         description: error.message,
         status: "error",
         duration: 3000,
@@ -64,70 +77,129 @@ const EmployeeManagement = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      // Auto-update salary when position changes
+      if (name === 'position') {
+        if (value && positions[value]) {
+          newData.salary = positions[value];
+        } else {
+          newData.salary = 0;
+        }
+      }
+
+      return newData;
+    });
 
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handleSubmit = async () => {
+  const handleOpenAdd = () => {
+    setIsEditMode(false);
+    setEditingId(null);
+    setFormData({
+      name: '',
+      email: '',
+      contactNo: '',
+      gender: '',
+      position: '',
+      salary: 0,
+      dob: '',
+      password: '',
+      confirmPassword: ''
+    });
     setErrors({});
+    onOpen();
+  };
 
-    // 2. Validate Password Match
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({ confirmPassword: "Password do not match" });
+  const handleEdit = (emp) => {
+    setIsEditMode(true);
+    setEditingId(emp.employeeID);
+
+    // Format DOB for input (YYYY-MM-DD)
+    let formattedDob = '';
+    if (emp.dob) {
+      formattedDob = new Date(emp.dob).toISOString().split('T')[0];
+    }
+
+    setFormData({
+      name: emp.name,
+      email: emp.email,
+      contactNo: emp.contactNo,
+      gender: emp.gender,
+      position: emp.position,
+      salary: emp.salary || (positions[emp.position] || 0),
+      dob: formattedDob,
+      password: '', // Not used in edit
+      confirmPassword: ''
+    });
+    setErrors({});
+    onOpen();
+  };
+
+  const handleSubmit = async () => {
+    const newErrors = {};
+
+    // 1. Validate Required Fields
+    if (!formData.name) newErrors.name = "Name is required";
+    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.contactNo) newErrors.contactNo = "Contact No is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.position) newErrors.position = "Position is required";
+    if (!formData.dob) newErrors.dob = "Date of Birth is required";
+
+    // Validate Password only in Add Mode
+    if (!isEditMode) {
+      if (!formData.password) newErrors.password = "Password is required";
+      if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm Password is required";
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match";
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
+
     try {
-      // Format dates for backend
       const payload = {
         name: formData.name,
         email: formData.email,
         contactNo: formData.contactNo,
         gender: formData.gender,
         position: formData.position,
-        password: formData.password, // Send only the password
         dob: formData.dob ? `${formData.dob}T00:00:00` : null,
       };
 
-      await createEmployee(payload);
+      if (isEditMode) {
+        // Update existing employee (no password)
+        await updateEmployee(editingId, payload);
+        toast({ title: "Employee updated", status: "success", duration: 3000 });
+      } else {
+        // Create new employee (with password)
+        payload.password = formData.password;
+        await createEmployee(payload);
+        toast({ title: "Employee created", status: "success", duration: 3000 });
+      }
 
-      toast({
-        title: "Employee added successfully",
-        status: "success",
-        duration: 3000,
-      });
       onClose();
-      fetchEmployees();
-
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        contactNo: '',
-        gender: 'MALE',
-        position: 'WAITER',
-        dob: '',
-        password: '',
-        confirmPassword: ''
-      });
-      setShowPassword(false);
-      setShowConfirmPassword(false);
+      // Refresh employees but keep positions
+      const empData = await getAllEmployees();
+      setEmployees(empData);
 
     } catch (error) {
       console.log("FULL ERROR RESPONSE:", error.response);
       if (error.response && error.response.status === 400) {
-        console.log("DATA RECEIVED:", error.response.data); // <--- Add this
         setErrors(error.response.data);
       } else {
         toast({
-          title: "Failed to add employee",
-          //description: error.response?.data?.message || error.message,
+          title: isEditMode ? "Failed to update" : "Failed to create",
           description: "Something went wrong",
           status: "error",
           duration: 3000,
@@ -141,65 +213,210 @@ const EmployeeManagement = () => {
       try {
         await deleteEmployee(id);
         toast({ title: "Employee deleted", status: "success" });
-        fetchEmployees();
+        // Refresh employees
+        const empData = await getAllEmployees();
+        setEmployees(empData);
       } catch (error) {
         toast({ title: "Delete failed", status: "error" });
       }
     }
   };
 
+  // Sorting Logic
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleSearch = (columnKey, isOpen) => {
+    setActiveSearches(prev => ({ ...prev, [columnKey]: isOpen }));
+    if (!isOpen) {
+      // Clear filter when closing search
+      handleFilterChange(columnKey, '');
+    }
+  };
+
+  const filteredAndSortedEmployees = React.useMemo(() => {
+    let processedItems = [...employees];
+
+    // Apply Filters
+    Object.keys(filters).forEach(key => {
+      const filterValue = filters[key].toLowerCase();
+      if (filterValue) {
+        processedItems = processedItems.filter(emp => {
+          let cellValue = emp[key];
+
+          // Handle different data types for filtering
+          if (key === 'salary' && cellValue !== undefined) {
+            return cellValue.toString().includes(filterValue);
+          }
+
+          // For dates, check against the displayed formatted string
+          if ((key === 'dob' || key === 'dateJoined') && cellValue) {
+            const formattedDate = new Date(cellValue).toLocaleDateString('en-GB');
+            return formattedDate.includes(filterValue);
+          }
+
+          if (cellValue) {
+            return cellValue.toString().toLowerCase().includes(filterValue);
+          }
+          return false;
+        });
+      }
+    });
+
+    // Sort items
+    if (sortConfig.key !== null) {
+      processedItems.sort((a, b) => {
+        let valA = a[sortConfig.key];
+        let valB = b[sortConfig.key];
+
+        // Safe check for null values
+        if (valA === null || valA === undefined) valA = '';
+        if (valB === null || valB === undefined) valB = '';
+
+        // String comparison case-insensitive
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return processedItems;
+  }, [employees, sortConfig, filters]);
+
+  // Helper to render sort icon
+  const getSortIcon = (columnName) => {
+    if (sortConfig.key !== columnName) {
+      // Show faded icon to indicate sortability
+      return <TriangleDownIcon ml={1} w={3} h={3} color="gray.300" />;
+    }
+    return sortConfig.direction === 'ascending' ?
+      <TriangleUpIcon ml={1} w={3} h={3} color="brand.600" /> :
+      <TriangleDownIcon ml={1} w={3} h={3} color="brand.600" />;
+  };
+
+  // Helper for Header Cell with Search
+  const HeaderCell = ({ label, columnKey, width }) => {
+    const isSearchOpen = activeSearches[columnKey];
+
+    return (
+      <Th width={width} verticalAlign="top" py={2}>
+        <Box>
+          <HStack justify="space-between" width="100%" mb={isSearchOpen ? 2 : 0}>
+            <Box
+              cursor="pointer"
+              onClick={() => handleSort(columnKey)}
+              display="flex"
+              alignItems="center"
+              _hover={{ color: "brand.600" }}
+              flex={1}
+              title="Click to sort"
+            >
+              {label} {getSortIcon(columnKey)}
+            </Box>
+            <IconButton
+              aria-label="Search"
+              icon={isSearchOpen ? <CloseIcon /> : <SearchIcon />}
+              size="xs"
+              variant="ghost"
+              color={isSearchOpen ? "red.400" : "gray.400"}
+              _hover={{ color: isSearchOpen ? "red.500" : "brand.500" }}
+              onClick={() => toggleSearch(columnKey, !isSearchOpen)}
+            />
+          </HStack>
+
+          {isSearchOpen && (
+            <Input
+              size="sm"
+              autoFocus
+              placeholder={`Search...`}
+              value={filters[columnKey] || ''}
+              onChange={(e) => handleFilterChange(columnKey, e.target.value)}
+              bg="white"
+              borderColor="gray.200"
+              _focus={{ borderColor: "brand.500", boxShadow: "none" }}
+            />
+          )}
+        </Box>
+      </Th>
+    );
+  };
+
   return (
     <Box>
       <HStack justify="space-between" mb={6}>
         <Heading size="lg" color="brown.900">Employee Management</Heading>
-        <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={onOpen}>
+        <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleOpenAdd}>
           Add Employee
         </Button>
       </HStack>
 
-      {isLoading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-          {employees.map((emp) => (
-            <Card key={emp.employeeID || emp.id} borderRadius="xl" boxShadow="sm">
-              <CardBody>
-                <HStack spacing={4} align="start">
-                  <Avatar name={emp.name} bg="brown.200" />
-                  <Box>
-                    <Heading size="sm">{emp.name}</Heading>
-                    <Text fontSize="sm" color="gray.500">{emp.position}</Text>
-                    <Badge colorScheme="green" mt={2}>Active</Badge>
-                  </Box>
-                </HStack>
-                <Text mt={4} fontSize="sm" color="gray.600">
-                  ID: {emp.employeeID || 'N/A'}<br />
-                  Email: {emp.email}<br />
-                  Contact: {emp.contactNo}
-                </Text>
-                <HStack mt={4}>
-                  <Button size="sm" flex={1}>View Profile</Button>
-                  <Button
-                    size="sm"
-                    colorScheme="red"
-                    variant="outline"
-                    flex={1}
-                    onClick={() => handleDelete(emp.employeeID)}
-                  >
-                    Delete
-                  </Button>
-                </HStack>
-              </CardBody>
-            </Card>
-          ))}
-        </SimpleGrid>
-      )}
+      <Box bg="white" borderRadius="xl" boxShadow="sm" p={4}>
+        <Box overflowX="auto">
+          <Table variant="simple">
+            <Thead>
+              <Tr>
+                <HeaderCell label="Name" columnKey="name" width="200px" />
+                <HeaderCell label="Position" columnKey="position" width="180px" />
+                <HeaderCell label="Salary" columnKey="salary" width="150px" />
+                <HeaderCell label="Email" columnKey="email" width="220px" />
+                <HeaderCell label="Contact" columnKey="contactNo" width="150px" />
+                <HeaderCell label="DOB" columnKey="dob" width="150px" />
+                <HeaderCell label="Joined" columnKey="dateJoined" width="150px" />
+                <Th pt={3} width="100px">Action</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {filteredAndSortedEmployees.map((emp) => (
+                <Tr key={emp.employeeID || emp.id}>
+                  <Td fontWeight="bold">{emp.name}</Td>
+                  <Td>{emp.position}</Td>
+                  <Td>RM {emp.salary?.toFixed(2)}</Td>
+                  <Td>{emp.email}</Td>
+                  <Td>{emp.contactNo}</Td>
+                  <Td>{emp.dob ? new Date(emp.dob).toLocaleDateString('en-GB') : 'N/A'}</Td>
+                  <Td>{emp.dateJoined ? new Date(emp.dateJoined).toLocaleDateString('en-GB') : 'N/A'}</Td>
+                  <Td>
+                    <HStack spacing={2}>
+                      <Button size="sm" colorScheme="blue" variant="ghost" onClick={() => handleEdit(emp)}>
+                        <EditIcon />
+                      </Button>
+                      <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDelete(emp.employeeID)}>
+                        <DeleteIcon />
+                      </Button>
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+              {filteredAndSortedEmployees.length === 0 && !isLoading && (
+                <Tr>
+                  <Td colSpan={8} textAlign="center" py={4}>No employees found matching your filters.</Td>
+                </Tr>
+              )}
+            </Tbody>
+          </Table>
+        </Box>
+      </Box>
 
-      {/* Add Employee Modal */}
+      {/* Add/Edit Employee Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Employee</ModalHeader>
+          <ModalHeader>{isEditMode ? "Edit Employee" : "Add New Employee"}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <SimpleGrid columns={2} spacing={4}>
@@ -217,54 +434,57 @@ const EmployeeManagement = () => {
                 <FormErrorMessage>{errors.email}</FormErrorMessage>
               </FormControl>
 
-              {/* PASSWORD FIELD */}
-              <FormControl isRequired isInvalid={!!errors.password}>
-                <FormLabel>Password</FormLabel>
-                <InputGroup>
-                  <Input
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Min 6 chars"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                  />
-                  <InputRightElement>
-                    <IconButton
-                      variant="ghost"
-                      icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      size="sm"
-                    />
-                  </InputRightElement>
-                </InputGroup>
-                <FormErrorMessage>{errors.password}</FormErrorMessage>
-              </FormControl>
+              {/* PASSWORD FIELDS (Only show in Add Mode) */}
+              {!isEditMode && (
+                <>
+                  <FormControl isRequired isInvalid={!!errors.password}>
+                    <FormLabel>Password</FormLabel>
+                    <InputGroup>
+                      <Input
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Min 6 chars"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                      />
+                      <InputRightElement>
+                        <IconButton
+                          variant="ghost"
+                          icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          size="sm"
+                        />
+                      </InputRightElement>
+                    </InputGroup>
+                    <FormErrorMessage>{errors.password}</FormErrorMessage>
+                  </FormControl>
 
-              {/* CONFIRM PASSWORD FIELD */}
-              <FormControl isRequired isInvalid={!!errors.confirmPassword}>
-                <FormLabel>Confirm Password</FormLabel>
-                <InputGroup>
-                  <Input
-                    name='confirmPassword'
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder='Re-enter password'
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                  />
-                  <InputRightElement>
-                    <IconButton
-                      variant="ghost"
-                      icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                      size="sm"
-                    />
-                  </InputRightElement>
-                </InputGroup>
+                  <FormControl isRequired isInvalid={!!errors.confirmPassword}>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <InputGroup>
+                      <Input
+                        name='confirmPassword'
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder='Re-enter password'
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                      />
+                      <InputRightElement>
+                        <IconButton
+                          variant="ghost"
+                          icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          size="sm"
+                        />
+                      </InputRightElement>
+                    </InputGroup>
 
-                <FormErrorMessage>{errors.confirmPassword}</FormErrorMessage>
-              </FormControl>
+                    <FormErrorMessage>{errors.confirmPassword}</FormErrorMessage>
+                  </FormControl>
+                </>
+              )}
 
               {/* CONTACT NUMBER FIELD */}
               <FormControl isRequired isInvalid={!!errors.contactNo}>
@@ -276,7 +496,7 @@ const EmployeeManagement = () => {
               {/* GENDER FIELD */}
               <FormControl isRequired isInvalid={!!errors.gender}>
                 <FormLabel>Gender</FormLabel>
-                <Select name="gender" value={formData.gender} onChange={handleInputChange}>
+                <Select placeholder='Select Gender' name="gender" value={formData.gender} onChange={handleInputChange}>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
                   <option value="OTHER">Other</option>
@@ -287,20 +507,22 @@ const EmployeeManagement = () => {
               {/* POSITION FIELD */}
               <FormControl isRequired isInvalid={!!errors.position}>
                 <FormLabel>Position</FormLabel>
-                <Select name="position" value={formData.position} onChange={handleInputChange}>
-                  <option value="MANAGER">Manager</option>
-                  <option value="CASHIER">Cashier</option>
-                  <option value="CHEF">Chef</option>
-                  <option value="WAITER">Waiter</option>
-                  <option value="CLEANER">Cleaner</option>
+                <Select placeholder='Select Position' name="position" value={formData.position} onChange={handleInputChange}>
+                  {Object.entries(positions)
+                    .sort(([, salaryA], [, salaryB]) => salaryB - salaryA)
+                    .map(([pos, salary]) => (
+                      <option key={pos} value={pos}>
+                        {pos.replace('_', ' ')} (RM {salary})
+                      </option>
+                    ))}
                 </Select>
                 <FormErrorMessage>{errors.position}</FormErrorMessage>
               </FormControl>
 
-              <FormControl isRequired isInvalid={!!errors.DOB}>
+              <FormControl isRequired isInvalid={!!errors.dob}>
                 <FormLabel>Date of Birth</FormLabel>
-                <Input name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
-                <FormErrorMessage>{errors.DOB}</FormErrorMessage>
+                <Input name="dob" type="date" value={formData.dob} onChange={handleInputChange} max={new Date().toISOString().split('T')[0]} />
+                <FormErrorMessage>{errors.dob}</FormErrorMessage>
               </FormControl>
 
             </SimpleGrid>
@@ -309,12 +531,12 @@ const EmployeeManagement = () => {
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onClose}>Cancel</Button>
             <Button colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleSubmit}>
-              Save Employee
+              {isEditMode ? "Update Employee" : "Save Employee"}
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Box>
+    </Box >
   );
 };
 

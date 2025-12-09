@@ -11,24 +11,33 @@ import com.teddybite.dto.EmployeeCreateDTO;
 import com.teddybite.entity.Employee;
 import com.teddybite.repository.EmployeeRepository;
 
+import com.teddybite.exception.DuplicateResourceException;
+
 @Service
-public class EmployeeService implements IEmployeeService{
-    
+public class EmployeeService implements IEmployeeService {
+
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
     }
-    
+
     @Override
     public Employee createEmployee(EmployeeCreateDTO employeeDTO) {
+        if (employeeRepository.existsByEmail(employeeDTO.getEmail())) {
+            throw new DuplicateResourceException("email", "Email already exists");
+        }
+        if (employeeRepository.existsByContactNo(employeeDTO.getContactNo())) {
+            throw new DuplicateResourceException("contactNo", "Contact number already exists");
+        }
+
         Employee newEmployee = new Employee();
 
         newEmployee.setName(employeeDTO.getName());
         newEmployee.setGender(employeeDTO.getGender());
-        newEmployee.setDOB(employeeDTO.getDOB());
+        newEmployee.setDob(employeeDTO.getDob());
         newEmployee.setContactNo(employeeDTO.getContactNo());
         newEmployee.setEmail(employeeDTO.getEmail());
         newEmployee.setPosition(employeeDTO.getPosition());
@@ -52,11 +61,17 @@ public class EmployeeService implements IEmployeeService{
 
     @Override
     public Employee updateEmployee(Employee employee) {
+        if (employeeRepository.existsByEmailAndEmployeeIDNot(employee.getEmail(), employee.getEmployeeID())) {
+            throw new DuplicateResourceException("email", "Email already exists");
+        }
+        if (employeeRepository.existsByContactNoAndEmployeeIDNot(employee.getContactNo(), employee.getEmployeeID())) {
+            throw new DuplicateResourceException("contactNo", "Contact number already exists");
+        }
         return employeeRepository.save(employee);
     }
 
     @Override
     public void deleteEmployeeById(String id) {
-        employeeRepository.deleteById(id); 
+        employeeRepository.deleteById(id);
     }
 }

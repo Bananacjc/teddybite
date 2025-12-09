@@ -11,6 +11,10 @@ import java.util.List;
 import com.teddybite.dto.EmployeeCreateDTO;
 import com.teddybite.dto.EmployeeUpdateDTO;
 import com.teddybite.entity.Employee;
+import com.teddybite.entity.EmployeePosition;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.teddybite.service.IEmployeeService;
 
 @RestController
@@ -21,6 +25,15 @@ public class EmployeeController {
 
     public EmployeeController(IEmployeeService employeeService) {
         this.employeeService = employeeService;
+    }
+
+    @GetMapping("/positions")
+    public ResponseEntity<Map<String, Double>> getPositions() {
+        Map<String, Double> positions = Arrays.stream(EmployeePosition.values())
+                .collect(Collectors.toMap(
+                        EmployeePosition::name,
+                        pos -> pos.salary));
+        return ResponseEntity.ok(positions);
     }
 
     @PostMapping
@@ -48,12 +61,13 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String id, @Valid @RequestBody EmployeeUpdateDTO updateDTO) {
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String id,
+            @Valid @RequestBody EmployeeUpdateDTO updateDTO) {
         return employeeService.readEmployeeById(id)
                 .map(currentEmployee -> {
                     currentEmployee.setName(updateDTO.getName());
                     currentEmployee.setGender(updateDTO.getGender());
-                    currentEmployee.setDOB(updateDTO.getDOB());
+                    currentEmployee.setDob(updateDTO.getDob());
                     currentEmployee.setContactNo(updateDTO.getContactNo());
                     currentEmployee.setEmail(updateDTO.getEmail());
                     currentEmployee.setPosition(updateDTO.getPosition());

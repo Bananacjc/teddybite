@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class TeddybiteApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TeddybiteApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TeddybiteApplication.class, args);
+    }
 
     @Bean
     CommandLineRunner testDbConnection(OrderRepository repository) {

@@ -19,7 +19,7 @@ public class EmployeeUpdateDTO {
 
     @NotNull(message = "Date of Birth is required")
     @Past(message = "Date of Birth must be in the past")
-    private LocalDateTime DOB;
+    private LocalDateTime dob;
 
     @NotBlank(message = "Contact Number is required")
     private String contactNo;

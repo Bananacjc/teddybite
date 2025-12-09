@@ -25,3 +25,8 @@ export const updateEmployee = async (id, employeeData) => {
 export const deleteEmployee = async (id) => {
   await axios.delete(`${API_BASE_URL}/employees/${id}`);
 };
+
+export const getEmployeePositions = async () => {
+  const response = await axios.get(`${API_BASE_URL}/employees/positions`);
+  return response.data;
+};
