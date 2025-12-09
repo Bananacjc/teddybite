@@ -33,3 +33,8 @@ export const getEmployeePositions = async () => {
   const response = await apiClient.get('/employees/positions');
   return response.data;
 };
+
+export const getEmployeeGenders = async () => {
+  const response = await apiClient.get('/employees/genders');
+  return response.data;
+};

@@ -8,11 +8,12 @@ import {
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Text
 } from '@chakra-ui/react';
 import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon } from '@chakra-ui/icons';
-import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, deleteEmployees, getEmployeePositions } from '../../api/employees';
+import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, deleteEmployees, getEmployeePositions, getEmployeeGenders } from '../../api/employees';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState({});
+  const [genders, setGenders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -65,12 +66,14 @@ const EmployeeManagement = () => {
 
   const fetchData = async () => {
     try {
-      const [empData, posData] = await Promise.all([
+      const [empData, posData, genderData] = await Promise.all([
         getAllEmployees(),
-        getEmployeePositions()
+        getEmployeePositions(),
+        getEmployeeGenders()
       ]);
       setEmployees(empData);
       setPositions(posData);
+      setGenders(genderData);
     } catch (error) {
       toast({
         title: "Error fetching data",
@@ -564,9 +567,11 @@ const EmployeeManagement = () => {
               <FormControl isRequired isInvalid={!!errors.gender}>
                 <FormLabel>Gender</FormLabel>
                 <Select placeholder='Select Gender' name="gender" value={formData.gender} onChange={handleInputChange}>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
+                  {genders.map((gender) => (
+                    <option key={gender} value={gender}>
+                      {gender.charAt(0) + gender.slice(1).toLowerCase().replace(/_/g, ' ')}
+                    </option>
+                  ))}
                 </Select>
                 <FormErrorMessage>{errors.gender}</FormErrorMessage>
               </FormControl>

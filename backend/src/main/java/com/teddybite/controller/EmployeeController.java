@@ -36,6 +36,11 @@ public class EmployeeController {
         return ResponseEntity.ok(positions);
     }
 
+    @GetMapping("/genders")
+    public ResponseEntity<List<com.teddybite.entity.Gender>> getGenders() {
+        return ResponseEntity.ok(Arrays.asList(com.teddybite.entity.Gender.values()));
+    }
+
     @PostMapping
     public ResponseEntity<Employee> save(@Valid @RequestBody EmployeeCreateDTO employeeDTO) {
 
