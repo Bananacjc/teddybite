@@ -31,14 +31,14 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { SearchIcon, AddIcon, MinusIcon, DeleteIcon } from '@chakra-ui/icons';
-import { 
-  Hamburger, 
-  Pizza, 
-  CupSoda, 
-  IceCream, 
-  Popcorn, 
-  Receipt, 
-  CreditCard, 
+import {
+  Hamburger,
+  Pizza,
+  CupSoda,
+  IceCream,
+  Popcorn,
+  Receipt,
+  CreditCard,
   ShoppingCart,
   Star,
   ArrowLeft
@@ -133,7 +133,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
                       RM {(item.price * item.qty).toFixed(2)}
                     </Text>
                   </Box>
-                  
+
                   <HStack spacing={3} bg="white" borderRadius="xl" px={2} py={1} boxShadow="sm">
                     <IconButton
                       icon={<MinusIcon />}
@@ -180,7 +180,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
           <Text color="brown.900" fontWeight="800" fontSize="2xl">RM {total.toFixed(2)}</Text>
         </Flex>
       </VStack>
-      
+
       <Button
         w="full"
         h="65px"
@@ -189,10 +189,10 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
         fontSize="lg"
         fontWeight="bold"
         borderRadius="2xl"
-        _hover={{ 
-          bg: 'brown.800', 
+        _hover={{
+          bg: 'brown.800',
           transform: 'translateY(-2px)',
-            boxShadow: '0 10px 20px rgba(62, 39, 35, 0.3)'
+          boxShadow: '0 10px 20px rgba(62, 39, 35, 0.3)'
         }}
         _active={{ transform: 'translateY(0)' }}
         leftIcon={<CreditCard size={20} />}
@@ -261,8 +261,8 @@ const OrderPage = () => {
     }
   };
 
-  const filteredItems = MENU_ITEMS.filter(item =>  
-    item.category === activeCategory && 
+  const filteredItems = MENU_ITEMS.filter(item =>
+    item.category === activeCategory &&
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -327,7 +327,7 @@ const OrderPage = () => {
         <Box mb={{ base: 0, md: 10 }} p={2} bg="brand.500" borderRadius="full" boxShadow="md" display={{ base: 'none', md: 'block' }}>
           <Image src={logo} boxSize="45px" objectFit="contain" />
         </Box>
-        
+
         <Flex direction={{ base: 'row', md: 'column' }} gap={6} w="full" justify="center" align="center">
           {CATEGORIES.map(cat => (
             <Tooltip key={cat.id} label={cat.name} placement="right" hasArrow bg="brown.800" color="brand.500">
@@ -388,7 +388,7 @@ const OrderPage = () => {
               {filteredItems.length} tasty items available
             </Text>
           </Box>
-          
+
           <InputGroup w={{ base: 'full', md: '400px' }} size="lg">
             <InputLeftElement pointerEvents="none" h="full">
               <SearchIcon color="gray.400" />
@@ -438,22 +438,22 @@ const OrderPage = () => {
                     borderRadius="30px"
                     overflow="hidden"
                     boxShadow="0 10px 30px rgba(0,0,0,0.05)"
-                    h={{ base: "280px", md: "360px" }}
+                    h="100%"
                     position="relative"
                     role="group"
                   >
-                    <Box h={{ base: "140px", md: "200px" }} overflow="hidden" position="relative">
-                      <Image 
-                        src={item.image} 
-                        alt={item.name} 
-                        w="100%" 
-                        h="100%" 
+                    <Box h={{ base: "140px", md: "200px" }} overflow="hidden" position="relative" flexShrink={0}>
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        w="100%"
+                        h="100%"
                         objectFit="cover"
                         transition="transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                         _groupHover={{ transform: 'scale(1.1)' }}
                       />
                     </Box>
-                    
+
                     <Flex direction="column" p={{ base: 4, md: 6 }} flex={1} justify="space-between">
                       <Box>
                         <Heading size={{ base: "sm", md: "md" }} mb={2} color="brown.900" fontWeight="700">
@@ -463,11 +463,11 @@ const OrderPage = () => {
                           {item.desc}
                         </Text>
                       </Box>
-                      
+
                       <Flex justify="space-between" align="center" mt={2}>
                         <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="800" color="brown.900">
                           <Text as="span" fontSize="lg" color="brand.500" mr={1}>RM</Text>
-                          {item.price}
+                          {item.price.toFixed(2)}
                         </Text>
                         <IconButton
                           icon={<AddIcon />}
@@ -484,10 +484,10 @@ const OrderPage = () => {
                       </Flex>
                     </Flex>
                   </Flex>
-                  </MotionBox>
-                ))}
-              </MotionGrid>
-            </AnimatePresence>
+                </MotionBox>
+              ))}
+            </MotionGrid>
+          </AnimatePresence>
         </Box>
       </Flex>
 
@@ -501,13 +501,13 @@ const OrderPage = () => {
         position="relative"
         display={{ base: 'none', lg: 'flex' }}
       >
-        <CartSection 
-          cart={cart} 
-          updateQty={updateQty} 
-          removeFromCart={removeFromCart} 
-          subtotal={subtotal} 
-          tax={tax} 
-          total={total} 
+        <CartSection
+          cart={cart}
+          updateQty={updateQty}
+          removeFromCart={removeFromCart}
+          subtotal={subtotal}
+          tax={tax}
+          total={total}
           onCheckout={handleCheckout}
         />
       </Flex>
@@ -518,13 +518,13 @@ const OrderPage = () => {
         <DrawerContent bg="transparent" boxShadow="none">
           <DrawerCloseButton zIndex={20} color="brown.900" />
           <DrawerBody p={0}>
-             <CartSection 
-              cart={cart} 
-              updateQty={updateQty} 
-              removeFromCart={removeFromCart} 
-              subtotal={subtotal} 
-              tax={tax} 
-              total={total} 
+            <CartSection
+              cart={cart}
+              updateQty={updateQty}
+              removeFromCart={removeFromCart}
+              subtotal={subtotal}
+              tax={tax}
+              total={total}
               onCheckout={handleCheckout}
             />
           </DrawerBody>
