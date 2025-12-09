@@ -90,4 +90,10 @@ public class EmployeeController {
         }
     }
 
+    @DeleteMapping("/batch")
+    public ResponseEntity<Void> deleteBatch(@RequestBody List<String> ids) {
+        employeeService.deleteEmployees(ids);
+        return ResponseEntity.noContent().build();
+    }
+
 }

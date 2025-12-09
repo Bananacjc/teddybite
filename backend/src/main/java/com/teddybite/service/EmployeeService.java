@@ -74,4 +74,9 @@ public class EmployeeService implements IEmployeeService {
     public void deleteEmployeeById(String id) {
         employeeRepository.deleteById(id);
     }
+
+    @Override
+    public void deleteEmployees(List<String> ids) {
+        employeeRepository.deleteAllById(ids);
+    }
 }

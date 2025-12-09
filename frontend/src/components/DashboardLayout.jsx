@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, Heading, Text, VStack, HStack, Icon, useColorModeValue, Divider, Avatar, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { Box, Flex, Heading, Text, VStack, HStack, Icon, useColorModeValue, Divider, Avatar, IconButton } from '@chakra-ui/react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { User, Package, ClipboardList, Users, CreditCard, LogOut, ShoppingCart } from 'lucide-react';
 import logo from '../assets/logo.png';
@@ -36,9 +36,18 @@ const DashboardLayout = () => {
   const bgColor = useColorModeValue('brown.50', 'gray.900');
   const sidebarBg = 'brown.900';
 
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const handleLogout = () => {
-    // Clear auth token if implemented
-    navigate('/login');
+    localStorage.removeItem('user');
+    navigate('/'); // Change to root or login
   };
 
   return (
@@ -57,7 +66,7 @@ const DashboardLayout = () => {
           {/* Brand */}
           <HStack spacing={3}>
             <Box p={2} bg="brand.500" borderRadius="full">
-               <img src={logo} alt="TeddyBite" style={{ width: '24px', height: '24px' }} />
+              <img src={logo} alt="TeddyBite" style={{ width: '24px', height: '24px' }} />
             </Box>
             <Heading size="md" color="brand.500">TeddyBite</Heading>
           </HStack>
@@ -72,9 +81,9 @@ const DashboardLayout = () => {
             <SidebarItem icon={ClipboardList} label="Orders" to="/dashboard/orders" />
             <SidebarItem icon={Users} label="Employees" to="/dashboard/employees" />
             <SidebarItem icon={CreditCard} label="Payments" to="/dashboard/payments" />
-            
+
             <Divider borderColor="brown.700" my={4} />
-            
+
             <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase" w="full" pl={3}>
               Operations
             </Text>
@@ -83,31 +92,27 @@ const DashboardLayout = () => {
         </VStack>
 
         {/* User Profile / Logout */}
-        <Menu>
-          <MenuButton w="full">
-            <HStack 
-              p={3} 
-              bg="brown.800" 
-              borderRadius="xl" 
-              cursor="pointer" 
-              _hover={{ bg: 'brown.700' }}
-              justify="space-between"
-            >
-              <HStack>
-                <Avatar size="sm" name="Employee" bg="brand.500" color="brown.900" />
-                <VStack align="start" spacing={0}>
-                  <Text fontSize="sm" fontWeight="bold" color="white">Employee</Text>
-                  <Text fontSize="xs" color="gray.400">Staff</Text>
-                </VStack>
-              </HStack>
+        {/* User Profile / Logout */}
+        <Box w="full" bg="brown.800" borderRadius="xl" p={3}>
+          <HStack justify="space-between" spacing={3}>
+            <HStack spacing={3} overflow="hidden">
+              <Avatar size="sm" name={user?.name || "Employee"} bg="brand.500" color="brown.900" />
+              <VStack align="start" spacing={0} overflow="hidden">
+                <Text fontSize="sm" fontWeight="bold" color="white" isTruncated w="full">{user?.name || "Employee"}</Text>
+                <Text fontSize="xs" color="gray.400" textTransform="capitalize">{user?.position?.replace('_', ' ')?.toLowerCase() || "Staff"}</Text>
+              </VStack>
             </HStack>
-          </MenuButton>
-          <MenuList bg="white" borderColor="gray.200">
-            <MenuItem icon={<LogOut size={16} />} onClick={handleLogout}>
-              Logout
-            </MenuItem>
-          </MenuList>
-        </Menu>
+            <IconButton
+              icon={<LogOut size={18} />}
+              onClick={handleLogout}
+              variant="ghost"
+              color="gray.400"
+              _hover={{ color: "red.300", bg: "whiteAlpha.200" }}
+              aria-label="Logout"
+              size="sm"
+            />
+          </HStack>
+        </Box>
       </Flex>
 
       {/* Main Content */}
