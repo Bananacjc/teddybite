@@ -1,9 +1,10 @@
 package com.teddybite.entity;
 
-
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 
 /**
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 public class Employee{
     @Id
     private String employeeID;
+    @JsonIgnore
+    private String password;
     private String name;
     private Gender gender;
     private LocalDateTime DOB;

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   Box, Heading, SimpleGrid, Card, CardBody, Avatar, Text, Badge, HStack, Button,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
-  FormControl, FormLabel, Input, Select, useDisclosure, useToast
+  FormControl, FormLabel, Input, Select, useDisclosure, useToast,
+  FormErrorMessage, InputGroup, InputRightElement, IconButton
 } from '@chakra-ui/react';
-import { AddIcon } from '@chakra-ui/icons';
+import { AddIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import { getAllEmployees, createEmployee, deleteEmployee } from '../../api/employees';
 
 const POSITION_SALARIES = {
@@ -21,6 +22,11 @@ const EmployeeManagement = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
+  const [errors, setErrors] = useState({});
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +36,8 @@ const EmployeeManagement = () => {
     position: 'WAITER',
     salary: POSITION_SALARIES['WAITER'],
     dob: '',
-    dateJoined: new Date().toISOString().split('T')[0]
+    password: '',
+    confirmPassword: ''
   });
 
   useEffect(() => {
@@ -56,33 +63,40 @@ const EmployeeManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === 'position') {
-      setFormData(prev => ({
-        ...prev,
-        position: value,
-        salary: POSITION_SALARIES[value] || 0
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleSubmit = async () => {
+    setErrors({});
+
+    // 2. Validate Password Match
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: "Password do not match" });
+      return;
+    }
+
     try {
-      // Format dates for backend (LocalDateTime expects ISO format roughly)
+      // Format dates for backend
       const payload = {
-        ...formData,
-        dob: formData.dob ? new Date(formData.dob).toISOString() : null,
-        dateJoined: formData.dateJoined ? new Date(formData.dateJoined).toISOString() : null,
-        salary: parseFloat(formData.salary) || 0
+        name: formData.name,
+        email: formData.email,
+        contactNo: formData.contactNo,
+        gender: formData.gender,
+        position: formData.position,
+        password: formData.password, // Send only the password
+        dob: formData.dob ? `${formData.dob}T00:00:00` : null,
       };
 
       await createEmployee(payload);
-      
+
       toast({
         title: "Employee added successfully",
         status: "success",
@@ -90,7 +104,7 @@ const EmployeeManagement = () => {
       });
       onClose();
       fetchEmployees();
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -98,18 +112,27 @@ const EmployeeManagement = () => {
         contactNo: '',
         gender: 'MALE',
         position: 'WAITER',
-        salary: POSITION_SALARIES['WAITER'],
         dob: '',
-        dateJoined: new Date().toISOString().split('T')[0]
+        password: '',
+        confirmPassword: ''
       });
+      setShowPassword(false);
+      setShowConfirmPassword(false);
 
     } catch (error) {
-      toast({
-        title: "Failed to add employee",
-        description: error.response?.data?.message || error.message,
-        status: "error",
-        duration: 3000,
-      });
+      console.log("FULL ERROR RESPONSE:", error.response);
+      if (error.response && error.response.status === 400) {
+        console.log("DATA RECEIVED:", error.response.data); // <--- Add this
+        setErrors(error.response.data);
+      } else {
+        toast({
+          title: "Failed to add employee",
+          //description: error.response?.data?.message || error.message,
+          description: "Something went wrong",
+          status: "error",
+          duration: 3000,
+        });
+      }
     }
   };
 
@@ -150,16 +173,16 @@ const EmployeeManagement = () => {
                   </Box>
                 </HStack>
                 <Text mt={4} fontSize="sm" color="gray.600">
-                  ID: {emp.employeeID || 'N/A'}<br/>
-                  Email: {emp.email}<br/>
+                  ID: {emp.employeeID || 'N/A'}<br />
+                  Email: {emp.email}<br />
                   Contact: {emp.contactNo}
                 </Text>
                 <HStack mt={4}>
                   <Button size="sm" flex={1}>View Profile</Button>
-                  <Button 
-                    size="sm" 
-                    colorScheme="red" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    colorScheme="red"
+                    variant="outline"
                     flex={1}
                     onClick={() => handleDelete(emp.employeeID)}
                   >
@@ -180,27 +203,89 @@ const EmployeeManagement = () => {
           <ModalCloseButton />
           <ModalBody>
             <SimpleGrid columns={2} spacing={4}>
-              <FormControl isRequired>
+              {/* NAME FIELD */}
+              <FormControl isRequired isInvalid={!!errors.name}>
                 <FormLabel>Full Name</FormLabel>
                 <Input name="name" value={formData.name} onChange={handleInputChange} />
+                <FormErrorMessage>{errors.name}</FormErrorMessage>
               </FormControl>
-              <FormControl isRequired>
+
+              {/* EMAIL FIELD */}
+              <FormControl isRequired isInvalid={!!errors.email}>
                 <FormLabel>Email</FormLabel>
                 <Input name="email" type="email" value={formData.email} onChange={handleInputChange} />
+                <FormErrorMessage>{errors.email}</FormErrorMessage>
               </FormControl>
-              <FormControl isRequired>
+
+              {/* PASSWORD FIELD */}
+              <FormControl isRequired isInvalid={!!errors.password}>
+                <FormLabel>Password</FormLabel>
+                <InputGroup>
+                  <Input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Min 6 chars"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                  />
+                  <InputRightElement>
+                    <IconButton
+                      variant="ghost"
+                      icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      size="sm"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+                <FormErrorMessage>{errors.password}</FormErrorMessage>
+              </FormControl>
+
+              {/* CONFIRM PASSWORD FIELD */}
+              <FormControl isRequired isInvalid={!!errors.confirmPassword}>
+                <FormLabel>Confirm Password</FormLabel>
+                <InputGroup>
+                  <Input
+                    name='confirmPassword'
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder='Re-enter password'
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                  />
+                  <InputRightElement>
+                    <IconButton
+                      variant="ghost"
+                      icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      size="sm"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+
+                <FormErrorMessage>{errors.confirmPassword}</FormErrorMessage>
+              </FormControl>
+
+              {/* CONTACT NUMBER FIELD */}
+              <FormControl isRequired isInvalid={!!errors.contactNo}>
                 <FormLabel>Contact No</FormLabel>
                 <Input name="contactNo" value={formData.contactNo} onChange={handleInputChange} />
+                <FormErrorMessage>{errors.contactNo}</FormErrorMessage>
               </FormControl>
-              <FormControl isRequired>
+
+              {/* GENDER FIELD */}
+              <FormControl isRequired isInvalid={!!errors.gender}>
                 <FormLabel>Gender</FormLabel>
                 <Select name="gender" value={formData.gender} onChange={handleInputChange}>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
                   <option value="OTHER">Other</option>
                 </Select>
+                <FormErrorMessage>{errors.gender}</FormErrorMessage>
               </FormControl>
-              <FormControl isRequired>
+
+              {/* POSITION FIELD */}
+              <FormControl isRequired isInvalid={!!errors.position}>
                 <FormLabel>Position</FormLabel>
                 <Select name="position" value={formData.position} onChange={handleInputChange}>
                   <option value="MANAGER">Manager</option>
@@ -209,19 +294,15 @@ const EmployeeManagement = () => {
                   <option value="WAITER">Waiter</option>
                   <option value="CLEANER">Cleaner</option>
                 </Select>
+                <FormErrorMessage>{errors.position}</FormErrorMessage>
               </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Salary (RM)</FormLabel>
-                <Input name="salary" type="number" value={formData.salary} isReadOnly bg="gray.100" />
-              </FormControl>
-              <FormControl>
+
+              <FormControl isRequired isInvalid={!!errors.DOB}>
                 <FormLabel>Date of Birth</FormLabel>
                 <Input name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
+                <FormErrorMessage>{errors.DOB}</FormErrorMessage>
               </FormControl>
-              <FormControl>
-                <FormLabel>Date Joined</FormLabel>
-                <Input name="dateJoined" type="date" value={formData.dateJoined} onChange={handleInputChange} />
-              </FormControl>
+
             </SimpleGrid>
           </ModalBody>
 

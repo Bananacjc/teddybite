@@ -1,42 +1,62 @@
 package com.teddybite.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import com.teddybite.dto.EmployeeCreateDTO;
 import com.teddybite.entity.Employee;
 import com.teddybite.repository.EmployeeRepository;
 
 @Service
 public class EmployeeService implements IEmployeeService{
     
-    @Autowired
     private final EmployeeRepository employeeRepository;
-
-    @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository) {
+    private final PasswordEncoder passwordEncoder;
+    
+    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
     
     @Override
-    public Employee save(Employee employee) {
-        return employeeRepository.save(employee);
+    public Employee createEmployee(EmployeeCreateDTO employeeDTO) {
+        Employee newEmployee = new Employee();
+
+        newEmployee.setName(employeeDTO.getName());
+        newEmployee.setGender(employeeDTO.getGender());
+        newEmployee.setDOB(employeeDTO.getDOB());
+        newEmployee.setContactNo(employeeDTO.getContactNo());
+        newEmployee.setEmail(employeeDTO.getEmail());
+        newEmployee.setPosition(employeeDTO.getPosition());
+        newEmployee.setSalary(employeeDTO.getPosition().salary);
+        newEmployee.setDateJoined(LocalDateTime.now());
+
+        newEmployee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+
+        return employeeRepository.save(newEmployee);
     }
 
     @Override
-    public List<Employee> findAll() {
+    public List<Employee> readEmployeeAll() {
         return employeeRepository.findAll();
     }
 
     @Override
-    public Optional<Employee> findById(String id) {
+    public Optional<Employee> readEmployeeById(String id) {
         return employeeRepository.findById(id);
     }
 
     @Override
-    public void deleteById(String id) {
+    public Employee updateEmployee(Employee employee) {
+        return employeeRepository.save(employee);
+    }
+
+    @Override
+    public void deleteEmployeeById(String id) {
         employeeRepository.deleteById(id); 
     }
 }
