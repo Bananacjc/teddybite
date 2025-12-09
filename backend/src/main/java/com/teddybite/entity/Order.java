@@ -10,12 +10,8 @@ import java.time.LocalDateTime;
 @Document(collection = "orders")
 public class Order {
     @Id
-    private String id;
+    private String orderId;
     private List<OrderItem> orderItems;
-    private double subTotal;
-    private double tax;
-    private double totalAmount;
-    private Payment payment;
-    private String status;
+    private String paymentId;
     private LocalDateTime createdAt;
 }
