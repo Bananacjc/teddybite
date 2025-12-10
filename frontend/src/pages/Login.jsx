@@ -22,7 +22,7 @@ import logo from '../assets/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');

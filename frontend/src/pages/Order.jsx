@@ -29,6 +29,18 @@ import {
   DrawerCloseButton,
   useDisclosure,
   useToast,
+  Radio,
+  RadioGroup,
+  Stack,
+  Checkbox,
+  CheckboxGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter
 } from '@chakra-ui/react';
 import { SearchIcon, AddIcon, MinusIcon, DeleteIcon } from '@chakra-ui/icons';
 import {
@@ -41,40 +53,30 @@ import {
   CreditCard,
   ShoppingCart,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  Drumstick
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.png';
 import { createOrder } from '../api/orders';
+import { createPayment } from '../api/payments';
+import { getAllItems, getItemRemarks } from '../api/items';
 
 // Motion Components
-const MotionBox = motion(Box);
-const MotionFlex = motion(Flex);
-const MotionGrid = motion(Grid);
+const MotionBox = motion.create(Box);
+const MotionFlex = motion.create(Flex);
+const MotionGrid = motion.create(Grid);
 
 // Mock Data
 const CATEGORIES = [
-  { id: 'burger', name: 'Burgers', icon: <Hamburger size={24} /> },
-  { id: 'pizza', name: 'Pizza', icon: <Pizza size={24} /> },
-  { id: 'drink', name: 'Drinks', icon: <CupSoda size={24} /> },
-  { id: 'dessert', name: 'Dessert', icon: <IceCream size={24} /> },
-  { id: 'snack', name: 'Snacks', icon: <Popcorn size={24} /> },
+  { id: 'BURGER', name: 'Burgers', icon: <Hamburger size={24} /> },
+  { id: 'FRIED_CHICKEN', name: 'Fried Chicken', icon: <Drumstick size={24} /> },
+  { id: 'BEVERAGES', name: 'Beverages', icon: <CupSoda size={24} /> },
+  { id: 'DESSERTS', name: 'Desserts', icon: <IceCream size={24} /> },
+  { id: 'CONDIMENTS', name: 'Condiments', icon: <Popcorn size={24} /> },
 ];
 
-const MENU_ITEMS = [
-  { id: 1, category: 'burger', name: 'Teddy Classic', price: 8.99, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=60', desc: 'Beef patty, cheddar, lettuce, tomato, house sauce', rating: 4.8 },
-  { id: 2, category: 'burger', name: 'Double Trouble', price: 12.99, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=500&q=60', desc: 'Double beef, double cheese, bacon, onion rings', rating: 4.9 },
-  { id: 3, category: 'burger', name: 'Chicken Crunch', price: 9.50, image: 'https://images.unsplash.com/photo-1615557960916-5f4791effe9d?auto=format&fit=crop&w=500&q=60', desc: 'Crispy chicken, spicy mayo, pickles', rating: 4.5 },
-  { id: 4, category: 'pizza', name: 'Margherita', price: 10.00, image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=500&q=60', desc: 'Tomato sauce, mozzarella, basil', rating: 4.7 },
-  { id: 5, category: 'pizza', name: 'Pepperoni Feast', price: 14.50, image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=500&q=60', desc: 'Double pepperoni, extra cheese', rating: 4.8 },
-  { id: 6, category: 'drink', name: 'Honey Lemon Tea', price: 3.50, image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=500&q=60', desc: 'Freshly brewed tea with honey and lemon', rating: 4.6 },
-  { id: 7, category: 'drink', name: 'Berry Smoothie', price: 5.00, image: 'https://images.unsplash.com/photo-1623593688280-a503c00213cb?auto=format&fit=crop&w=500&q=60', desc: 'Mixed berries, yogurt, mint', rating: 4.9 },
-  { id: 8, category: 'snack', name: 'Golden Fries', price: 3.99, image: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=500&q=60', desc: 'Crispy salted french fries', rating: 4.4 },
-  { id: 9, category: 'snack', name: 'Onion Rings', price: 4.50, image: 'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=500&q=60', desc: 'Battered and fried onion rings', rating: 4.3 },
-  { id: 10, category: 'dessert', name: 'Choco Lava', price: 6.50, image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=500&q=60', desc: 'Warm chocolate cake with molten center', rating: 5.0 },
-];
-
-const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, onCheckout }) => (
+const CartSection = ({ cart, updateQty, removeFromCart, total, onCheckout }) => (
   <Flex
     direction="column"
     h="full"
@@ -106,7 +108,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
           <AnimatePresence>
             {cart.map(item => (
               <MotionBox
-                key={item.id}
+                key={item.internalId}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -129,6 +131,9 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
                   />
                   <Box flex={1}>
                     <Text fontWeight="bold" color="brown.900" fontSize="md">{item.name}</Text>
+                    {item.remarks && item.remarks.length > 0 && (
+                      <Text fontSize="xs" color="gray.500">{item.remarks.join(', ')}</Text>
+                    )}
                     <Text fontWeight="bold" color="brand.600" fontSize="sm">
                       RM {(item.price * item.qty).toFixed(2)}
                     </Text>
@@ -140,17 +145,17 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
                       size="xs"
                       variant="ghost"
                       color="brown.900"
-                      onClick={() => item.qty > 1 ? updateQty(item.id, -1) : removeFromCart(item.id)}
+                      onClick={() => item.qty > 1 ? updateQty(item.internalId, -1) : removeFromCart(item.internalId)}
                       aria-label="Decrease"
                       _hover={{ bg: 'gray.100' }}
                     />
-                    <Text fontWeight="bold" fontSize="sm" w="16px" textAlign="center">{item.qty}</Text>
+                    <Text fontWeight="bold" fontSize="sm" w="30px" textAlign="center">{item.qty}</Text>
                     <IconButton
                       icon={<AddIcon />}
                       size="xs"
                       variant="ghost"
                       color="brown.900"
-                      onClick={() => updateQty(item.id, 1)}
+                      onClick={() => updateQty(item.internalId, 1)}
                       aria-label="Increase"
                       _hover={{ bg: 'gray.100' }}
                     />
@@ -166,15 +171,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
     {/* Footer Summary */}
     <Box p={8} bg="white" borderTop="1px dashed" borderColor="gray.200">
       <VStack spacing={3} mb={6}>
-        <Flex w="full" justify="space-between" color="gray.500" fontSize="sm">
-          <Text>Subtotal</Text>
-          <Text fontWeight="medium">RM {subtotal.toFixed(2)}</Text>
-        </Flex>
-        <Flex w="full" justify="space-between" color="gray.500" fontSize="sm">
-          <Text>Tax (10%)</Text>
-          <Text fontWeight="medium">RM {tax.toFixed(2)}</Text>
-        </Flex>
-        <Divider />
+
         <Flex w="full" justify="space-between" align="center" pt={2}>
           <Text color="brown.900" fontWeight="bold" fontSize="lg">Total</Text>
           <Text color="brown.900" fontWeight="800" fontSize="2xl">RM {total.toFixed(2)}</Text>
@@ -206,42 +203,121 @@ const CartSection = ({ cart, updateQty, removeFromCart, subtotal, tax, total, on
 );
 
 const OrderPage = () => {
-  const [activeCategory, setActiveCategory] = useState('burger');
+  const [activeCategory, setActiveCategory] = useState('BURGER');
+  const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [remarksOptions, setRemarksOptions] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // Remarks Modal State
+  const { isOpen: isRemarkOpen, onOpen: onRemarkOpen, onClose: onRemarkClose } = useDisclosure();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [remarkRadio, setRemarkRadio] = useState('');
+  const [remarkCheckbox, setRemarkCheckbox] = useState([]);
+  const [modalQty, setModalQty] = useState(1);
+
+  // Payment Modal State
+  const { isOpen: isPaymentOpen, onOpen: onPaymentOpen, onClose: onPaymentClose } = useDisclosure();
+
   const theme = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
 
-  const handleCheckout = async () => {
-    const orderData = {
-      orderItems: cart.map(item => ({
-        itemId: item.id.toString(),
-        itemName: item.name,
-        unitPrice: item.price,
-        quantity: item.qty,
-        lineTotal: parseFloat((item.price * item.qty).toFixed(2))
-      })),
-      subTotal: subtotal,
-      tax: tax,
-      totalAmount: total,
-      payment: {
-        method: "CASH",
-        transactionId: "TX" + Date.now().toString().slice(-6),
-        amount: total,
-        status: "Paid"
-      },
-      status: "Completed",
-      createdAt: new Date().toISOString()
-    };
+  React.useEffect(() => {
+    fetchData();
+  }, []);
 
+  const fetchData = async () => {
+    fetchMenuItems();
+    fetchRemarks();
+  };
+
+  const fetchRemarks = async () => {
     try {
+      const data = await getItemRemarks();
+      // Process backend map into frontend options format
+      const options = {};
+      Object.keys(data).forEach(category => {
+        const remarksList = data[category];
+        let type = 'checkbox';
+        let title = `Customize your ${category.replace('_', ' ').toLowerCase()}`;
+
+        if (category === 'BEVERAGES') {
+          type = 'radio';
+          title = 'Drink Preferences';
+        } else if (category === 'BURGER') {
+          title = 'Customize your Burger';
+        }
+
+        options[category] = {
+          type: type,
+          title: title,
+          options: remarksList // List of formatted strings from backend e.g. "EXTRA LETTUCE"
+        };
+      });
+      setRemarksOptions(options);
+    } catch (error) {
+      console.error("Failed to fetch remarks", error);
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      const data = await getAllItems();
+      const mappedItems = data.map(item => ({
+        id: item.itemId,
+        category: item.itemCategory,
+        name: item.itemName,
+        price: item.itemPrice,
+        image: item.itemImage || 'https://via.placeholder.com/300?text=No+Image',
+        desc: `Delicious ${item.itemCategory.toLowerCase().replace('_', ' ')}`
+      }));
+      setMenuItems(mappedItems);
+    } catch (error) {
+      toast({
+        title: "Error fetching menu",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleCheckoutClick = () => {
+    onPaymentOpen();
+  };
+
+  const handlePayment = async (method) => {
+    onPaymentClose();
+    try {
+      // 1. Create Payment
+      const paymentData = {
+        paymentAmount: total,
+        paymentType: method
+      };
+
+      const paymentResponse = await createPayment(paymentData);
+      const paymentId = paymentResponse.paymentId;
+
+      // 2. Create Order
+      const orderData = {
+        orderItems: cart.map(item => ({
+          itemId: item.id.toString(),
+          itemName: item.name,
+          unitPrice: item.price,
+          quantity: item.qty,
+          lineTotal: parseFloat((item.price * item.qty).toFixed(2)),
+          remarks: item.remarks || []
+        })),
+        paymentId: paymentId
+      };
+
       const data = await createOrder(orderData);
 
       toast({
         title: "Order Placed Successfully!",
-        description: `Order ID: ${data.id}`,
+        description: `Order ID: ${data.orderId}`,
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -251,8 +327,8 @@ const OrderPage = () => {
     } catch (error) {
       console.error("Order Error:", error);
       toast({
-        title: "Connection Error",
-        description: error.response?.data?.message || "Could not connect to the backend server. Make sure it's running!",
+        title: "Checkout Failed",
+        description: error.response?.data?.message || "Something went wrong during checkout.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -261,24 +337,61 @@ const OrderPage = () => {
     }
   };
 
-  const filteredItems = MENU_ITEMS.filter(item =>
+
+
+  const filteredItems = menuItems.filter(item =>
     item.category === activeCategory &&
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addToCart = (item) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i);
-      }
-      return [...prev, { ...item, qty: 1 }];
-    });
+  const initiateAddToCart = (item) => {
+    setSelectedItem(item);
+
+    // Reset selections
+    setRemarkRadio('Regular');
+    setRemarkCheckbox([]);
+    setModalQty(1);
+
+    onRemarkOpen();
   };
 
-  const updateQty = (id, delta) => {
+  const confirmAddToCart = () => {
+    let finalRemarks = [];
+    const config = remarksOptions[selectedItem.category];
+
+    if (config) {
+      if (config.type === 'radio' && remarkRadio) {
+        finalRemarks.push(remarkRadio);
+      } else if (config.type === 'checkbox') {
+        finalRemarks = [...remarkCheckbox];
+      }
+    }
+
+    setCart(prev => {
+      // Create a unique ID based on item ID and remarks to separate variations
+      // We use internalId for frontend tracking
+      const newItem = {
+        ...selectedItem,
+        qty: modalQty,
+        remarks: finalRemarks,
+        internalId: selectedItem.id + '-' + JSON.stringify(finalRemarks) + '-' + Date.now()
+      };
+
+      const existing = prev.find(i => i.id === selectedItem.id && JSON.stringify(i.remarks) === JSON.stringify(finalRemarks));
+
+      if (existing) {
+        return prev.map(i => i.internalId === existing.internalId ? { ...i, qty: i.qty + modalQty } : i);
+      }
+      return [...prev, newItem];
+    });
+
+    onRemarkClose();
+    toast({ title: "Added to cart", status: "success", duration: 1000 });
+  };
+
+  const updateQty = (internalId, delta) => {
     setCart(prev => prev.map(item => {
-      if (item.id === id) {
+      if (item.internalId === internalId) {
         const newQty = Math.max(0, item.qty + delta);
         return { ...item, qty: newQty };
       }
@@ -286,13 +399,11 @@ const OrderPage = () => {
     }).filter(item => item.qty > 0));
   };
 
-  const removeFromCart = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
+  const removeFromCart = (internalId) => {
+    setCart(prev => prev.filter(item => item.internalId !== internalId));
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
+  const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
   return (
     <Flex h="100vh" w="100vw" overflow="hidden" bg="brown.50" position="relative" direction={{ base: 'column', md: 'row' }}>
@@ -312,18 +423,6 @@ const OrderPage = () => {
         position={{ base: 'fixed', md: 'relative' }}
         bottom={{ base: 0, md: 'auto' }}
       >
-        {/* Back to Dashboard */}
-        {/* <Tooltip label="Back to Dashboard" placement="right" hasArrow bg="brown.800" color="brand.500">
-          <IconButton
-            icon={<ArrowLeft size={24} />}
-            variant="ghost"
-            color="brand.500"
-            onClick={() => navigate('/dashboard')}
-            mb={{ base: 0, md: 4 }}
-            _hover={{ bg: 'brown.800', transform: 'scale(1.1)' }}
-          />
-        </Tooltip> */}
-
         <Box mb={{ base: 0, md: 10 }} p={2} bg="brand.500" borderRadius="full" boxShadow="md" display={{ base: 'none', md: 'block' }}>
           <Image src={logo} boxSize="45px" objectFit="contain" />
         </Box>
@@ -459,9 +558,7 @@ const OrderPage = () => {
                         <Heading size={{ base: "sm", md: "md" }} mb={2} color="brown.900" fontWeight="700">
                           {item.name}
                         </Heading>
-                        <Text fontSize="sm" color="gray.500" noOfLines={2} lineHeight="tall" display={{ base: 'none', md: 'block' }}>
-                          {item.desc}
-                        </Text>
+
                       </Box>
 
                       <Flex justify="space-between" align="center" mt={2}>
@@ -477,7 +574,7 @@ const OrderPage = () => {
                           size={{ base: "md", md: "lg" }}
                           _hover={{ bg: 'brand.500', color: 'brown.900', transform: 'scale(1.1)' }}
                           _active={{ transform: 'scale(0.95)' }}
-                          onClick={() => addToCart(item)}
+                          onClick={() => initiateAddToCart(item)}
                           aria-label="Add to cart"
                           boxShadow="lg"
                         />
@@ -505,10 +602,8 @@ const OrderPage = () => {
           cart={cart}
           updateQty={updateQty}
           removeFromCart={removeFromCart}
-          subtotal={subtotal}
-          tax={tax}
           total={total}
-          onCheckout={handleCheckout}
+          onCheckout={handleCheckoutClick}
         />
       </Flex>
 
@@ -522,14 +617,136 @@ const OrderPage = () => {
               cart={cart}
               updateQty={updateQty}
               removeFromCart={removeFromCart}
-              subtotal={subtotal}
-              tax={tax}
               total={total}
-              onCheckout={handleCheckout}
+              onCheckout={handleCheckoutClick}
             />
           </DrawerBody>
         </DrawerContent>
       </Drawer>
+
+      {/* Remarks Modal */}
+      <Modal isOpen={isRemarkOpen} onClose={onRemarkClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="20px">
+          <ModalHeader color="brown.900">
+            {selectedItem?.name}
+            {selectedItem && (
+              <Text fontSize="md" color="brand.600" fontWeight="bold">RM {selectedItem.price.toFixed(2)}</Text>
+            )}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedItem && (
+              <Box mb={4} borderRadius="xl" overflow="hidden" height="200px">
+                <Image src={selectedItem.image} alt={selectedItem.name} width="100%" height="100%" objectFit="cover" />
+              </Box>
+            )}
+            {selectedItem && remarksOptions[selectedItem.category] ? (
+              <Stack spacing={4}>
+                <Text fontWeight="medium" color="gray.600">{remarksOptions[selectedItem.category].title}</Text>
+                {remarksOptions[selectedItem.category].type === 'radio' ? (
+                  <RadioGroup onChange={setRemarkRadio} value={remarkRadio}>
+                    <Stack spacing={2}>
+                      {remarksOptions[selectedItem.category].options.map(opt => (
+                        <Radio key={opt} value={opt} colorScheme="orange" size="lg">
+                          <Text fontSize="md">{opt.replace(/_/g, ' ')}</Text>
+                        </Radio>
+                      ))}
+                    </Stack>
+                  </RadioGroup>
+                ) : (
+                  <CheckboxGroup colorScheme="orange" value={remarkCheckbox} onChange={setRemarkCheckbox}>
+                    <Stack spacing={2}>
+                      {remarksOptions[selectedItem.category].options.map(opt => (
+                        <Checkbox key={opt} value={opt} size="lg">
+                          <Text fontSize="md">{opt.replace(/_/g, ' ')}</Text>
+                        </Checkbox>
+                      ))}
+                    </Stack>
+                  </CheckboxGroup>
+                )}
+              </Stack>
+            ) : null}
+
+            {/* Quantity Selector */}
+            <Flex align="center" justify="space-between" mt={6} pt={4} borderTop="1px solid" borderColor="gray.100">
+              <Text fontWeight="bold" color="brown.900">Quantity</Text>
+              <HStack spacing={4}>
+                <IconButton
+                  icon={<MinusIcon />}
+                  size="sm"
+                  variant="outline"
+                  colorScheme="brown"
+                  onClick={() => setModalQty(Math.max(1, modalQty - 1))}
+                  isDisabled={modalQty <= 1}
+                  borderRadius="full"
+                />
+                <Text fontWeight="bold" fontSize="lg" w="50px" textAlign="center">{modalQty}</Text>
+                <IconButton
+                  icon={<AddIcon />}
+                  size="sm"
+                  variant="solid"
+                  bg="brown.900"
+                  color="brand.500"
+                  _hover={{ bg: 'brown.800' }}
+                  onClick={() => setModalQty(modalQty + 1)}
+                  borderRadius="full"
+                />
+              </HStack>
+            </Flex>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onRemarkClose}>Cancel</Button>
+            <Button bg="brown.900" color="brand.500" _hover={{ bg: 'brown.800' }} onClick={confirmAddToCart}>
+              Add to Cart
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Payment Selection Modal */}
+      <Modal isOpen={isPaymentOpen} onClose={onPaymentClose} isCentered size="md">
+        <ModalOverlay />
+        <ModalContent borderRadius="2xl" p={4}>
+          <ModalHeader textAlign="center" fontSize="2xl" color="brown.900">Select Payment Method</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4}>
+              <Button
+                w="full"
+                h="80px"
+                colorScheme="green"
+                variant="outline"
+                borderWidth="2px"
+                _hover={{ bg: 'green.50', transform: 'scale(1.02)' }}
+                onClick={() => handlePayment('CASH')}
+              >
+                <VStack spacing={1}>
+                  <Text fontSize="xl" fontWeight="bold">CASH</Text>
+                  <Text fontSize="sm">Pay at counter</Text>
+                </VStack>
+              </Button>
+              <Button
+                w="full"
+                h="80px"
+                colorScheme="blue"
+                variant="outline"
+                borderWidth="2px"
+                _hover={{ bg: 'blue.50', transform: 'scale(1.02)' }}
+                onClick={() => handlePayment('CREDIT_CARD')}
+              >
+                <VStack spacing={1}>
+                  <Text fontSize="xl" fontWeight="bold">CREDIT CARD</Text>
+                  <Text fontSize="sm">Visa, Mastercard, etc.</Text>
+                </VStack>
+              </Button>
+            </VStack>
+          </ModalBody>
+          <ModalFooter justify="center">
+            <Button variant="ghost" onClick={onPaymentClose}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Mobile Cart FAB */}
       <IconButton

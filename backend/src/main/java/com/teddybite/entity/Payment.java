@@ -5,10 +5,13 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.teddybite.entity.types.PaymentType;
+
 @Data
 @Document(collection = "payments")
 public class Payment {
     @Id
     private String paymentId;
     private double paymentAmount;
+    private PaymentType paymentType;
 }

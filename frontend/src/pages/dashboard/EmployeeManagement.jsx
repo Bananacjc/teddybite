@@ -4,7 +4,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel, Input, Select, useDisclosure, useToast,
   FormErrorMessage, InputGroup, InputRightElement, IconButton, Checkbox,
-  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon,
+  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon, Stack,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Text
 } from '@chakra-ui/react';
 import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon } from '@chakra-ui/icons';
@@ -404,19 +404,19 @@ const EmployeeManagement = () => {
 
   return (
     <Box>
-      <HStack justify="space-between" mb={6}>
+      <Stack direction={{ base: 'column', sm: 'row' }} justify="space-between" mb={6} spacing={4}>
         <Heading size="lg" color="brown.900">Employee Management</Heading>
-        <HStack>
+        <Stack direction={{ base: 'column', sm: 'row' }} spacing={2}>
           {selectedIds.length > 0 && (
-            <Button leftIcon={<DeleteIcon />} colorScheme="red" variant="outline" onClick={handleBatchDelete}>
+            <Button leftIcon={<DeleteIcon />} colorScheme="red" variant="outline" onClick={handleBatchDelete} w={{ base: 'full', sm: 'auto' }}>
               Delete Selected ({selectedIds.length})
             </Button>
           )}
-          <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleOpenAdd}>
+          <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleOpenAdd} w={{ base: 'full', sm: 'auto' }}>
             Add Employee
           </Button>
-        </HStack>
-      </HStack>
+        </Stack>
+      </Stack>
 
       <Box bg="white" borderRadius="xl" boxShadow="sm" p={4}>
         <Box overflowX="auto">
@@ -489,7 +489,7 @@ const EmployeeManagement = () => {
           <ModalHeader>{isEditMode ? "Edit Employee" : "Add New Employee"}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <SimpleGrid columns={2} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               {/* NAME FIELD */}
               <FormControl isRequired isInvalid={!!errors.name}>
                 <FormLabel>Full Name</FormLabel>

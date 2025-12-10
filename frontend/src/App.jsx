@@ -7,15 +7,20 @@ import ItemManagement from './pages/dashboard/ItemManagement';
 import OrderManagement from './pages/dashboard/OrderManagement';
 import EmployeeManagement from './pages/dashboard/EmployeeManagement';
 import PaymentManagement from './pages/dashboard/PaymentManagement';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        
+
         {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Navigate to="/dashboard/profile" replace />} />
           <Route path="profile" element={<Profile />} />
           <Route path="items" element={<ItemManagement />} />
@@ -26,9 +31,9 @@ function App() {
 
         {/* Standalone POS Route */}
         <Route path="/order" element={<OrderPage />} />
-        
+
         {/* Default Redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/order" replace />} />
       </Routes>
     </Router>
   );

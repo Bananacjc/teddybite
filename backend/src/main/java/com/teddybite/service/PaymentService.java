@@ -23,6 +23,7 @@ public class PaymentService implements IPaymentService {
     public Payment createPayment(PaymentDTO paymentDTO) {
         Payment newPayment = new Payment();
         newPayment.setPaymentAmount(paymentDTO.getPaymentAmount());
+        newPayment.setPaymentType(paymentDTO.getPaymentType());
         return paymentRepository.save(newPayment);
     }
 

@@ -19,4 +19,5 @@ public class Item {
     private String itemName;
     private double itemPrice;
     private ItemCategory itemCategory;
+    private String itemImage;
 }
