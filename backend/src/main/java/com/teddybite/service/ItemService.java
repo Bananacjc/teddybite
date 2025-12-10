@@ -1,5 +1,7 @@
 package com.teddybite.service;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,8 +9,9 @@ import com.teddybite.entity.Item;
 import com.teddybite.repository.ItemRepository;
 import com.teddybite.service.interfaceService.IItemService;
 
+@Service
 public class ItemService implements IItemService {
-    
+
     private final ItemRepository itemRepository;
 
     public ItemService(ItemRepository itemRepository) {
