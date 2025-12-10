@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.teddybite.dto.PaymentDTO;
 import com.teddybite.entity.Payment;
 import com.teddybite.repository.PaymentRepository;
+import com.teddybite.service.interfaceService.IPaymentService;
 
 @Service
 public class PaymentService implements IPaymentService {
