@@ -11,11 +11,12 @@ import java.util.List;
 import com.teddybite.dto.EmployeeCreateDTO;
 import com.teddybite.dto.EmployeeUpdateDTO;
 import com.teddybite.entity.Employee;
-import com.teddybite.entity.EmployeePosition;
+import com.teddybite.entity.types.EmployeePosition;
+import com.teddybite.service.interfaceService.IEmployeeService;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.teddybite.service.IEmployeeService;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -73,9 +74,9 @@ public class EmployeeController {
                     currentEmployee.setPosition(updateDTO.getPosition());
                     currentEmployee.setSalary(updateDTO.getPosition().salary);
 
-                    Employee updatEmployee = employeeService.updateEmployee(currentEmployee);
+                    Employee updatedEmployee = employeeService.updateEmployee(currentEmployee);
 
-                    return ResponseEntity.ok(updatEmployee);
+                    return ResponseEntity.ok(updatedEmployee);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
