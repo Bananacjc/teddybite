@@ -2,7 +2,7 @@ package com.teddybite.controller;
 
 import com.teddybite.dto.OrderDTO;
 import com.teddybite.entity.Order;
-import com.teddybite.service.IOrderService;
+import com.teddybite.service.interfaceService.IOrderService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

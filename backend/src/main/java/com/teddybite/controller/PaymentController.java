@@ -9,7 +9,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.teddybite.dto.PaymentDTO;
 import com.teddybite.entity.Payment;
-import com.teddybite.service.IPaymentService;
+import com.teddybite.service.interfaceService.IPaymentService;
 
 import jakarta.validation.Valid;
 

@@ -1,4 +1,4 @@
-package com.teddybite.service;
+package com.teddybite.service.interfaceService;
 
 import java.util.Optional;
 import java.util.List;

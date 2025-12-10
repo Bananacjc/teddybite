@@ -12,6 +12,7 @@ import com.teddybite.dto.EmployeeCreateDTO;
 import com.teddybite.dto.EmployeeUpdateDTO;
 import com.teddybite.entity.Employee;
 import com.teddybite.entity.types.EmployeePosition;
+import com.teddybite.entity.types.Gender;
 import com.teddybite.service.interfaceService.IEmployeeService;
 
 import java.util.Arrays;
@@ -38,8 +39,8 @@ public class EmployeeController {
     }
 
     @GetMapping("/genders")
-    public ResponseEntity<List<com.teddybite.entity.Gender>> getGenders() {
-        return ResponseEntity.ok(Arrays.asList(com.teddybite.entity.Gender.values()));
+    public ResponseEntity<List<Gender>> getGenders() {
+        return ResponseEntity.ok(Arrays.asList(Gender.values()));
     }
 
     @PostMapping

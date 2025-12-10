@@ -5,8 +5,8 @@ import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 
-import com.teddybite.entity.EmployeePosition;
-import com.teddybite.entity.Gender;
+import com.teddybite.entity.types.EmployeePosition;
+import com.teddybite.entity.types.Gender;
 
 @Data
 public class EmployeeCreateDTO {

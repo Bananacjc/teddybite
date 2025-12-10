@@ -1,4 +1,4 @@
-package com.teddybite.entity;
+package com.teddybite.entity.types;
 
 public enum Gender {
     MALE,
