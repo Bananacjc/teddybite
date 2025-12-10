@@ -38,7 +38,9 @@ const LoginPage = () => {
 
     try {
       const user = await login({ email, password });
-      
+
+      localStorage.setItem('user', JSON.stringify(user));
+
       toast({
         title: "Login Successful",
         description: `Welcome back, ${user.name || 'Employee'}!`,
@@ -63,38 +65,38 @@ const LoginPage = () => {
   };
 
   return (
-    <Flex 
-      minH="100vh" 
-      w="100vw" 
-      bg="brown.50" 
-      align="center" 
+    <Flex
+      minH="100vh"
+      w="100vw"
+      bg="brown.50"
+      align="center"
       justify="center"
       position="relative"
       overflow="hidden"
     >
       {/* Background Decoration */}
-      <Box 
-        position="absolute" 
-        top="-10%" 
-        right="-5%" 
-        w="500px" 
-        h="500px" 
-        bg="brand.200" 
-        borderRadius="full" 
-        filter="blur(80px)" 
-        opacity={0.4} 
+      <Box
+        position="absolute"
+        top="-10%"
+        right="-5%"
+        w="500px"
+        h="500px"
+        bg="brand.200"
+        borderRadius="full"
+        filter="blur(80px)"
+        opacity={0.4}
         zIndex={0}
       />
-      <Box 
-        position="absolute" 
-        bottom="-10%" 
-        left="-5%" 
-        w="400px" 
-        h="400px" 
-        bg="brown.200" 
-        borderRadius="full" 
-        filter="blur(80px)" 
-        opacity={0.4} 
+      <Box
+        position="absolute"
+        bottom="-10%"
+        left="-5%"
+        w="400px"
+        h="400px"
+        bg="brown.200"
+        borderRadius="full"
+        filter="blur(80px)"
+        opacity={0.4}
         zIndex={0}
       />
 
@@ -121,8 +123,8 @@ const LoginPage = () => {
               <VStack spacing={4}>
                 <FormControl isRequired>
                   <FormLabel color="brown.900">Email Address</FormLabel>
-                  <Input 
-                    type="email" 
+                  <Input
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="employee@teddybite.com"
@@ -137,7 +139,7 @@ const LoginPage = () => {
                 <FormControl isRequired>
                   <FormLabel color="brown.900">Password</FormLabel>
                   <InputGroup size="lg">
-                    <Input 
+                    <Input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -166,8 +168,8 @@ const LoginPage = () => {
                   color="brand.500"
                   isLoading={isLoading}
                   loadingText="Signing in..."
-                  _hover={{ 
-                    bg: 'brown.800', 
+                  _hover={{
+                    bg: 'brown.800',
                     transform: 'translateY(-2px)',
                     boxShadow: 'lg'
                   }}

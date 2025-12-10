@@ -37,6 +37,11 @@ public class EmployeeController {
         return ResponseEntity.ok(positions);
     }
 
+    @GetMapping("/genders")
+    public ResponseEntity<List<com.teddybite.entity.Gender>> getGenders() {
+        return ResponseEntity.ok(Arrays.asList(com.teddybite.entity.Gender.values()));
+    }
+
     @PostMapping
     public ResponseEntity<Employee> save(@Valid @RequestBody EmployeeCreateDTO employeeDTO) {
 
@@ -89,6 +94,12 @@ public class EmployeeController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @DeleteMapping("/batch")
+    public ResponseEntity<Void> deleteBatch(@RequestBody List<String> ids) {
+        employeeService.deleteEmployees(ids);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -3,15 +3,17 @@ import {
   Box, Heading, Button,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel, Input, Select, useDisclosure, useToast,
-  FormErrorMessage, InputGroup, InputRightElement, IconButton,
-  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon
+  FormErrorMessage, InputGroup, InputRightElement, IconButton, Checkbox,
+  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon,
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Text
 } from '@chakra-ui/react';
 import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon } from '@chakra-ui/icons';
-import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, getEmployeePositions } from '../../api/employees';
+import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, deleteEmployees, getEmployeePositions, getEmployeeGenders } from '../../api/employees';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState({});
+  const [genders, setGenders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -36,6 +38,15 @@ const EmployeeManagement = () => {
   const [activeSearches, setActiveSearches] = useState({}); // { name: true, email: false }
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
+  // Delete Dialog State
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [deleteType, setDeleteType] = useState(null); // 'single' or 'batch'
+  const [deleteId, setDeleteId] = useState(null);
+  const cancelRef = React.useRef();
+
+  // Selection State
+  const [selectedIds, setSelectedIds] = useState([]);
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -55,12 +66,14 @@ const EmployeeManagement = () => {
 
   const fetchData = async () => {
     try {
-      const [empData, posData] = await Promise.all([
+      const [empData, posData, genderData] = await Promise.all([
         getAllEmployees(),
-        getEmployeePositions()
+        getEmployeePositions(),
+        getEmployeeGenders()
       ]);
       setEmployees(empData);
       setPositions(posData);
+      setGenders(genderData);
     } catch (error) {
       toast({
         title: "Error fetching data",
@@ -208,17 +221,50 @@ const EmployeeManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
-      try {
-        await deleteEmployee(id);
+  const handleDelete = (id) => {
+    setDeleteType('single');
+    setDeleteId(id);
+    onDeleteOpen();
+  };
+
+  const handleBatchDelete = () => {
+    setDeleteType('batch');
+    onDeleteOpen();
+  };
+
+  const confirmDelete = async () => {
+    onDeleteClose();
+    try {
+      if (deleteType === 'single') {
+        await deleteEmployee(deleteId);
         toast({ title: "Employee deleted", status: "success" });
-        // Refresh employees
-        const empData = await getAllEmployees();
-        setEmployees(empData);
-      } catch (error) {
-        toast({ title: "Delete failed", status: "error" });
+      } else if (deleteType === 'batch') {
+        await deleteEmployees(selectedIds);
+        toast({ title: "Employees deleted", status: "success" });
+        setSelectedIds([]);
       }
+      // Refresh employees
+      const empData = await getAllEmployees();
+      setEmployees(empData);
+    } catch (error) {
+      toast({ title: "Delete failed", status: "error" });
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = filteredAndSortedEmployees.map(emp => emp.employeeID);
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(sid => sid !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
     }
   };
 
@@ -360,9 +406,16 @@ const EmployeeManagement = () => {
     <Box>
       <HStack justify="space-between" mb={6}>
         <Heading size="lg" color="brown.900">Employee Management</Heading>
-        <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleOpenAdd}>
-          Add Employee
-        </Button>
+        <HStack>
+          {selectedIds.length > 0 && (
+            <Button leftIcon={<DeleteIcon />} colorScheme="red" variant="outline" onClick={handleBatchDelete}>
+              Delete Selected ({selectedIds.length})
+            </Button>
+          )}
+          <Button leftIcon={<AddIcon />} colorScheme="brand" bg="brand.500" color="brown.900" onClick={handleOpenAdd}>
+            Add Employee
+          </Button>
+        </HStack>
       </HStack>
 
       <Box bg="white" borderRadius="xl" boxShadow="sm" p={4}>
@@ -370,6 +423,15 @@ const EmployeeManagement = () => {
           <Table variant="simple">
             <Thead>
               <Tr>
+                <Th width="40px" px={2}>
+                  <Checkbox
+                    isChecked={selectedIds.length === filteredAndSortedEmployees.length && filteredAndSortedEmployees.length > 0}
+                    isIndeterminate={selectedIds.length > 0 && selectedIds.length < filteredAndSortedEmployees.length}
+                    onChange={handleSelectAll}
+                    colorScheme="brand"
+                  />
+                </Th>
+                <HeaderCell label="ID" columnKey="employeeID" width="120px" />
                 <HeaderCell label="Name" columnKey="name" width="200px" />
                 <HeaderCell label="Position" columnKey="position" width="180px" />
                 <HeaderCell label="Salary" columnKey="salary" width="150px" />
@@ -383,6 +445,14 @@ const EmployeeManagement = () => {
             <Tbody>
               {filteredAndSortedEmployees.map((emp) => (
                 <Tr key={emp.employeeID || emp.id}>
+                  <Td px={2}>
+                    <Checkbox
+                      isChecked={selectedIds.includes(emp.employeeID)}
+                      onChange={() => handleSelectRow(emp.employeeID)}
+                      colorScheme="brand"
+                    />
+                  </Td>
+                  <Td fontSize="xs" color="gray.500">{emp.employeeID}</Td>
                   <Td fontWeight="bold">{emp.name}</Td>
                   <Td>{emp.position}</Td>
                   <Td>RM {emp.salary?.toFixed(2)}</Td>
@@ -497,9 +567,11 @@ const EmployeeManagement = () => {
               <FormControl isRequired isInvalid={!!errors.gender}>
                 <FormLabel>Gender</FormLabel>
                 <Select placeholder='Select Gender' name="gender" value={formData.gender} onChange={handleInputChange}>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
+                  {genders.map((gender) => (
+                    <option key={gender} value={gender}>
+                      {gender.charAt(0) + gender.slice(1).toLowerCase().replace(/_/g, ' ')}
+                    </option>
+                  ))}
                 </Select>
                 <FormErrorMessage>{errors.gender}</FormErrorMessage>
               </FormControl>
@@ -536,6 +608,40 @@ const EmployeeManagement = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Employee{deleteType === 'batch' ? 's' : ''}
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure? You can't undo this action afterwards.
+              {deleteType === 'batch' && (
+                <Text mt={2} fontWeight="bold">
+                  You are about to delete {selectedIds.length} employees.
+                </Text>
+              )}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onDeleteClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
     </Box >
   );
 };

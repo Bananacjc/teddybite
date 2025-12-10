@@ -1,32 +1,40 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8081/api';
+import apiClient from './client';
 
 export const getAllEmployees = async () => {
-  const response = await axios.get(`${API_BASE_URL}/employees`);
+  const response = await apiClient.get('/employees');
   return response.data;
 };
 
 export const getEmployeeById = async (id) => {
-  const response = await axios.get(`${API_BASE_URL}/employees/${id}`);
+  const response = await apiClient.get(`/employees/${id}`);
   return response.data;
 };
 
 export const createEmployee = async (employeeData) => {
-  const response = await axios.post(`${API_BASE_URL}/employees`, employeeData);
+  const response = await apiClient.post('/employees', employeeData);
   return response.data;
 };
 
 export const updateEmployee = async (id, employeeData) => {
-  const response = await axios.put(`${API_BASE_URL}/employees/${id}`, employeeData);
+  const response = await apiClient.put(`/employees/${id}`, employeeData);
   return response.data;
 };
 
 export const deleteEmployee = async (id) => {
-  await axios.delete(`${API_BASE_URL}/employees/${id}`);
+  await apiClient.delete(`/employees/${id}`);
+};
+
+export const deleteEmployees = async (ids) => {
+  // Pass data in the config object for DELETE requests
+  await apiClient.delete('/employees/batch', { data: ids });
 };
 
 export const getEmployeePositions = async () => {
-  const response = await axios.get(`${API_BASE_URL}/employees/positions`);
+  const response = await apiClient.get('/employees/positions');
+  return response.data;
+};
+
+export const getEmployeeGenders = async () => {
+  const response = await apiClient.get('/employees/genders');
   return response.data;
 };
