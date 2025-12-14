@@ -1,4 +1,4 @@
-package com.teddybite;
+package com.teddybite.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teddybite.entity.Item;

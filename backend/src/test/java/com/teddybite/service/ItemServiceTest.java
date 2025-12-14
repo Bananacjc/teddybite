@@ -1,4 +1,4 @@
-package com.teddybite;
+package com.teddybite.service;
 
 import com.teddybite.entity.Item;
 import com.teddybite.entity.types.ItemCategory;
@@ -94,7 +94,7 @@ class ItemServiceTest {
 
     @Test
     void deleteItemById_existingItem_deletesFromRepository() {
-        Item item = new Item("I001", "Burger", 9.9, ItemCategory.BURGER, "http://img");
+        Item item = new Item("I001", "Burger", 9.9, ItemCategory.BURGER, null);
         when(itemRepository.findById("I001")).thenReturn(Optional.of(item));
 
         itemService.deleteItemById("I001");
