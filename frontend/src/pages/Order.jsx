@@ -62,6 +62,7 @@ import { createOrder } from '../api/orders';
 import { createPayment } from '../api/payments';
 import { getAllItems, getItemRemarks } from '../api/items';
 import { baseURL } from '../api/client';
+import SecureImage from '../components/SecureImage';
 
 // Motion Components
 const MotionBox = motion.create(Box);
@@ -122,7 +123,7 @@ const CartSection = ({ cart, updateQty, removeFromCart, total, onCheckout }) => 
                   borderRadius="2xl"
                   role="group"
                 >
-                  <Image
+                  <SecureImage
                     src={item.image}
                     boxSize="65px"
                     borderRadius="xl"
@@ -555,7 +556,7 @@ const OrderPage = () => {
                     role="group"
                   >
                     <Box h={{ base: "140px", md: "200px" }} overflow="hidden" position="relative" flexShrink={0}>
-                      <Image
+                      <SecureImage
                         src={item.image}
                         alt={item.name}
                         w="100%"
@@ -651,7 +652,7 @@ const OrderPage = () => {
           <ModalBody>
             {selectedItem && (
               <Box mb={4} borderRadius="xl" overflow="hidden" height="200px">
-                <Image src={selectedItem.image} alt={selectedItem.name} width="100%" height="100%" objectFit="cover" />
+                <SecureImage src={selectedItem.image} alt={selectedItem.name} width="100%" height="100%" objectFit="cover" />
               </Box>
             )}
             {selectedItem && remarksOptions[selectedItem.category] ? (

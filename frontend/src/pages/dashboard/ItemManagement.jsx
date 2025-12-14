@@ -10,6 +10,7 @@ import {
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon, AttachmentIcon } from '@chakra-ui/icons';
 import { getAllItems, createItem, updateItem, deleteItem, deleteItems, getItemCategories } from '../../api/items';
 import { baseURL } from '../../api/client';
+import SecureImage from '../../components/SecureImage';
 
 
 
@@ -406,7 +407,7 @@ const ItemManagement = () => {
                   </Td>
                   <Td>
                     {item.itemImage ? (
-                      <Image boxSize="50px" objectFit="cover" borderRadius="md" src={getImageUrl(item.itemImage)} alt={item.itemName} fallbackSrc="https://via.placeholder.com/50" />
+                      <SecureImage boxSize="50px" objectFit="cover" borderRadius="md" src={getImageUrl(item.itemImage)} alt={item.itemName} />
                     ) : (
                       <Box boxSize="50px" bg="gray.100" borderRadius="md" />
                     )}
@@ -471,7 +472,7 @@ const ItemManagement = () => {
                 <FormLabel>Item Image</FormLabel>
                 {formData.itemImage && !formData.imageFile && (
                   <Box mb={2}>
-                    <Image src={getImageUrl(formData.itemImage)} alt="Current" boxSize="100px" objectFit="cover" borderRadius="md" />
+                    <SecureImage src={getImageUrl(formData.itemImage)} alt="Current" boxSize="100px" objectFit="cover" borderRadius="md" />
                     <Text fontSize="xs" color="gray.500">Current Image</Text>
                   </Box>
                 )}
