@@ -231,8 +231,14 @@ const OrderPage = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300?text=No+Image';
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${baseURL}/uploads/${imagePath}`;
+
+    // Strip existing domain path if present to ensure we use the dynamic baseURL
+    let cleanPath = imagePath;
+    if (imagePath.includes('/uploads/')) {
+      cleanPath = imagePath.split('/uploads/')[1];
+    }
+
+    return `${baseURL}/uploads/${cleanPath}`;
   };
 
   const fetchData = async () => {

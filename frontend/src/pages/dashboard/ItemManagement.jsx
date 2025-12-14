@@ -19,8 +19,14 @@ const ItemManagement = () => {
   // Helper to construct full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath; // Legacy support
-    return `${baseURL}/uploads/${imagePath}`;
+
+    // Strip existing domain path if present to ensure we use the dynamic baseURL
+    let cleanPath = imagePath;
+    if (imagePath.includes('/uploads/')) {
+      cleanPath = imagePath.split('/uploads/')[1];
+    }
+
+    return `${baseURL}/uploads/${cleanPath}`;
   };
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
