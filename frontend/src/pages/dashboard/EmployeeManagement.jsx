@@ -4,10 +4,10 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel, Input, Select, useDisclosure, useToast,
   FormErrorMessage, InputGroup, InputRightElement, IconButton, Checkbox,
-  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon, Stack,
+  Table, Thead, Tbody, Tr, Th, Td, Badge, HStack, SimpleGrid, Icon, Stack, Tooltip,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Text
 } from '@chakra-ui/react';
-import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon } from '@chakra-ui/icons';
+import { AddIcon, ViewIcon, ViewOffIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon, QuestionIcon } from '@chakra-ui/icons';
 import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, deleteEmployees, getEmployeePositions, getEmployeeGenders } from '../../api/employees';
 
 const EmployeeManagement = () => {
@@ -166,9 +166,18 @@ const EmployeeManagement = () => {
 
     // Validate Password only in Add Mode
     if (!isEditMode) {
-      if (!formData.password) newErrors.password = "Password is required";
-      if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm Password is required";
-      if (formData.password !== formData.confirmPassword) {
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      } else {
+        const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!.])(?=\S+$).{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+          newErrors.password = "Password must be at least 8 chars, contain 1 uppercase, 1 lowercase, 1 digit, and 1 special char (e.g. @#$%^&+=!.)";
+        }
+      }
+
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = "Confirm Password is required";
+      } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = "Passwords do not match";
       }
     }
@@ -360,7 +369,7 @@ const EmployeeManagement = () => {
     const isSearchOpen = activeSearches[columnKey];
 
     return (
-      <Th width={width} verticalAlign="top" py={2}>
+      <Th minWidth={width} verticalAlign="top" py={2}>
         <Box>
           <HStack justify="space-between" width="100%" mb={isSearchOpen ? 2 : 0}>
             <Box
@@ -432,7 +441,7 @@ const EmployeeManagement = () => {
                   />
                 </Th>
                 <HeaderCell label="ID" columnKey="employeeID" width="120px" />
-                <HeaderCell label="Name" columnKey="name" width="200px" />
+                <HeaderCell label="Name" columnKey="name" width="300px" />
                 <HeaderCell label="Position" columnKey="position" width="180px" />
                 <HeaderCell label="Salary" columnKey="salary" width="150px" />
                 <HeaderCell label="Email" columnKey="email" width="220px" />
@@ -508,12 +517,17 @@ const EmployeeManagement = () => {
               {!isEditMode && (
                 <>
                   <FormControl isRequired isInvalid={!!errors.password}>
-                    <FormLabel>Password</FormLabel>
+                    <HStack mb={2}>
+                      <FormLabel mb={0}>Password</FormLabel>
+                      <Tooltip label="Min 8 chars, 1 Uppercase, 1 Number, 1 Special" placement="top">
+                        <QuestionIcon color="gray.500" />
+                      </Tooltip>
+                    </HStack>
                     <InputGroup>
                       <Input
                         name="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Min 6 chars"
+                        placeholder="Enter password"
                         value={formData.password}
                         onChange={handleInputChange}
                       />

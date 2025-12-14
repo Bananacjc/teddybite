@@ -9,11 +9,19 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon, TriangleDownIcon, TriangleUpIcon, CloseIcon, AttachmentIcon } from '@chakra-ui/icons';
 import { getAllItems, createItem, updateItem, deleteItem, deleteItems, getItemCategories } from '../../api/items';
+import { baseURL } from '../../api/client';
 
 
 
 const ItemManagement = () => {
   const [items, setItems] = useState([]);
+
+  // Helper to construct full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath; // Legacy support
+    return `${baseURL}/uploads/${imagePath}`;
+  };
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -392,7 +400,7 @@ const ItemManagement = () => {
                   </Td>
                   <Td>
                     {item.itemImage ? (
-                      <Image boxSize="50px" objectFit="cover" borderRadius="md" src={item.itemImage} alt={item.itemName} fallbackSrc="https://via.placeholder.com/50" />
+                      <Image boxSize="50px" objectFit="cover" borderRadius="md" src={getImageUrl(item.itemImage)} alt={item.itemName} fallbackSrc="https://via.placeholder.com/50" />
                     ) : (
                       <Box boxSize="50px" bg="gray.100" borderRadius="md" />
                     )}
@@ -457,7 +465,7 @@ const ItemManagement = () => {
                 <FormLabel>Item Image</FormLabel>
                 {formData.itemImage && !formData.imageFile && (
                   <Box mb={2}>
-                    <Image src={formData.itemImage} alt="Current" boxSize="100px" objectFit="cover" borderRadius="md" />
+                    <Image src={getImageUrl(formData.itemImage)} alt="Current" boxSize="100px" objectFit="cover" borderRadius="md" />
                     <Text fontSize="xs" color="gray.500">Current Image</Text>
                   </Box>
                 )}

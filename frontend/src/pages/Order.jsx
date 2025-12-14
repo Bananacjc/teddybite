@@ -61,6 +61,7 @@ import logo from '../assets/logo.png';
 import { createOrder } from '../api/orders';
 import { createPayment } from '../api/payments';
 import { getAllItems, getItemRemarks } from '../api/items';
+import { baseURL } from '../api/client';
 
 // Motion Components
 const MotionBox = motion.create(Box);
@@ -228,6 +229,12 @@ const OrderPage = () => {
     fetchData();
   }, []);
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/300?text=No+Image';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${baseURL}/uploads/${imagePath}`;
+  };
+
   const fetchData = async () => {
     fetchMenuItems();
     fetchRemarks();
@@ -270,7 +277,7 @@ const OrderPage = () => {
         category: item.itemCategory,
         name: item.itemName,
         price: item.itemPrice,
-        image: item.itemImage || 'https://via.placeholder.com/300?text=No+Image',
+        image: getImageUrl(item.itemImage),
         desc: `Delicious ${item.itemCategory.toLowerCase().replace('_', ' ')}`
       }));
       setMenuItems(mappedItems);

@@ -31,7 +31,7 @@ public class ItemService implements IItemService {
             String imageUrl = saveImage(image);
             newItem.setItemImage(imageUrl);
         } else {
-            newItem.setItemImage(item.getItemImage()); // Allow setting URL directly if provided
+            newItem.setItemImage(cleanImageUrl(item.getItemImage()));
         }
 
         return itemRepository.save(newItem);
@@ -61,8 +61,21 @@ public class ItemService implements IItemService {
 
             String imageUrl = saveImage(image);
             item.setItemImage(imageUrl);
+        } else {
+            // Clean URL if no new image is provided but a URL string exists
+            item.setItemImage(cleanImageUrl(item.getItemImage()));
         }
         return itemRepository.save(item);
+    }
+
+    private String cleanImageUrl(String url) {
+        if (url != null && url.contains("/uploads/")) {
+            String[] parts = url.split("/uploads/");
+            if (parts.length > 1) {
+                return parts[1];
+            }
+        }
+        return url;
     }
 
     @Override
@@ -79,17 +92,19 @@ public class ItemService implements IItemService {
 
     private void deleteImage(String imageUrl) {
         try {
-            // Extract filename from URL
-            // Assuming URL format: http://host:port/uploads/filename
-            String[] parts = imageUrl.split("/uploads/");
-            if (parts.length > 1) {
-                String fileName = parts[1];
-                java.nio.file.Path path = java.nio.file.Paths.get("uploads").resolve(fileName);
-                java.nio.file.Files.deleteIfExists(path);
+            String fileName = imageUrl;
+            // Handle legacy full URLs if any exist
+            if (imageUrl.contains("/uploads/")) {
+                String[] parts = imageUrl.split("/uploads/");
+                if (parts.length > 1) {
+                    fileName = parts[1];
+                }
             }
+
+            java.nio.file.Path path = java.nio.file.Paths.get("uploads").resolve(fileName);
+            java.nio.file.Files.deleteIfExists(path);
         } catch (java.io.IOException e) {
             System.err.println("Failed to delete image: " + e.getMessage());
-            // Optionally log or handle exception
         }
     }
 
@@ -103,10 +118,8 @@ public class ItemService implements IItemService {
             java.nio.file.Files.copy(image.getInputStream(), path.resolve(fileName),
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            return org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/uploads/")
-                    .path(fileName)
-                    .toUriString();
+            // Return only the filename
+            return fileName;
         } catch (java.io.IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }

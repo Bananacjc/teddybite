@@ -34,50 +34,76 @@ const SidebarItem = ({ icon, label, to, onClick, ...rest }) => {
   );
 };
 
-const SidebarContent = ({ onClose, ...rest }) => (
-  <Box
-    bg="brown.900"
-    w={{ base: 'full', md: 60 }}
-    pos="fixed"
-    h="full"
-    {...rest}
-  >
-    <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-      <HStack spacing={3}>
-        <Box p={2} bg="brand.500" borderRadius="full">
-          <img src={logo} alt="TeddyBite" style={{ width: '24px', height: '24px' }} />
-        </Box>
-        <Heading size="md" color="brand.500">TeddyBite</Heading>
-      </HStack>
-      <IconButton
-        display={{ base: 'flex', md: 'none' }}
-        onClick={onClose}
-        variant="ghost"
-        color="white"
-        _hover={{ bg: "whiteAlpha.200", color: "red.300" }}
-        aria-label="Close menu"
-        icon={<X size={24} />}
-      />
-    </Flex>
-    <VStack align="start" spacing={1} w="full" px={4}>
-      <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase" w="full" pl={3} mt={4} mb={2}>
-        Management
-      </Text>
-      <SidebarItem icon={User} label="Profile" to="/dashboard/profile" onClick={onClose} />
-      <SidebarItem icon={Package} label="Items" to="/dashboard/items" onClick={onClose} />
-      <SidebarItem icon={ClipboardList} label="Orders" to="/dashboard/orders" onClick={onClose} />
-      <SidebarItem icon={Users} label="Employees" to="/dashboard/employees" onClick={onClose} />
-      <SidebarItem icon={CreditCard} label="Payments" to="/dashboard/payments" onClick={onClose} />
+const SidebarContent = ({ onClose, user, ...rest }) => {
+  const position = user?.position?.toUpperCase() || '';
+  const isManager = position === 'MANAGER';
+  const isCashier = position === 'CASHIER';
 
-      <Divider borderColor="brown.700" my={4} />
+  // Manager: All
+  // Cashier: Profile, Orders, Payments, POS
+  // Others: Profile
 
-      <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase" w="full" pl={3} mb={2}>
-        Operations
-      </Text>
-      <SidebarItem icon={ShoppingCart} label="POS System" to="/order" target="_blank" onClick={onClose} />
-    </VStack>
-  </Box>
-);
+  return (
+    <Box
+      bg="brown.900"
+      w={{ base: 'full', md: 60 }}
+      pos="fixed"
+      h="full"
+      {...rest}
+    >
+      <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
+        <HStack spacing={3}>
+          <Box p={2} bg="brand.500" borderRadius="full">
+            <img src={logo} alt="TeddyBite" style={{ width: '24px', height: '24px' }} />
+          </Box>
+          <Heading size="md" color="brand.500">TeddyBite</Heading>
+        </HStack>
+        <IconButton
+          display={{ base: 'flex', md: 'none' }}
+          onClick={onClose}
+          variant="ghost"
+          color="white"
+          _hover={{ bg: "whiteAlpha.200", color: "red.300" }}
+          aria-label="Close menu"
+          icon={<X size={24} />}
+        />
+      </Flex>
+      <VStack align="start" spacing={1} w="full" px={4}>
+        <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase" w="full" pl={3} mt={4} mb={2}>
+          Management
+        </Text>
+        <SidebarItem icon={User} label="Profile" to="/dashboard/profile" onClick={onClose} />
+
+        {isManager && (
+          <SidebarItem icon={Package} label="Items" to="/dashboard/items" onClick={onClose} />
+        )}
+
+        {(isManager || isCashier) && (
+          <SidebarItem icon={ClipboardList} label="Orders" to="/dashboard/orders" onClick={onClose} />
+        )}
+
+        {isManager && (
+          <SidebarItem icon={Users} label="Employees" to="/dashboard/employees" onClick={onClose} />
+        )}
+
+        {(isManager || isCashier) && (
+          <SidebarItem icon={CreditCard} label="Payments" to="/dashboard/payments" onClick={onClose} />
+        )}
+
+        {(isManager || isCashier) && (
+          <>
+            <Divider borderColor="brown.700" my={4} />
+
+            <Text color="gray.500" fontSize="xs" fontWeight="bold" textTransform="uppercase" w="full" pl={3} mb={2}>
+              Operations
+            </Text>
+            <SidebarItem icon={ShoppingCart} label="POS System" to="/order" target="_blank" onClick={onClose} />
+          </>
+        )}
+      </VStack>
+    </Box>
+  );
+};
 
 const UserProfileSection = ({ user, handleLogout }) => (
   <Box w="full" bg="brown.800" borderRadius="xl" p={3} mb={4}>
@@ -153,13 +179,14 @@ const DashboardLayout = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
-    navigate('/');
+    navigate('/login');
   };
 
   return (
     <Box minH="100vh" bg={bgColor}>
       <SidebarContent
         onClose={() => onClose}
+        user={user}
         display={{ base: 'none', md: 'block' }}
       >
         {/* We need to inject the UserProfile section into the desktop sidebar manually or compositionally */}
@@ -180,7 +207,7 @@ const DashboardLayout = () => {
         size="full"
       >
         <DrawerContent>
-          <SidebarContent onClose={onClose} />
+          <SidebarContent onClose={onClose} user={user} />
           <Box pos="absolute" bottom={0} w="full" p={4}>
             <UserProfileSection user={user} handleLogout={handleLogout} />
           </Box>

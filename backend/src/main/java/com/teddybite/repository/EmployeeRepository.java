@@ -14,4 +14,6 @@ public interface EmployeeRepository extends MongoRepository<Employee, String> {
     boolean existsByEmailAndEmployeeIDNot(String email, String employeeID);
 
     boolean existsByContactNoAndEmployeeIDNot(String contactNo, String employeeID);
+
+    java.util.Optional<Employee> findByEmail(String email);
 }

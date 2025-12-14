@@ -12,6 +12,8 @@ import com.teddybite.entity.types.Gender;
 public class EmployeeUpdateDTO {
 
     @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+    @Pattern(regexp = "^[a-zA-Z\\s]*$", message = "Name must contain only letters and spaces")
     private String name;
 
     @NotNull(message = "Gender is required")
@@ -22,6 +24,7 @@ public class EmployeeUpdateDTO {
     private LocalDateTime dob;
 
     @NotBlank(message = "Contact Number is required")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Contact Number must be a valid phone number (10-15 digits)")
     private String contactNo;
 
     @NotBlank(message = "Email is required")
