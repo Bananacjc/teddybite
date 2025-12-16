@@ -331,4 +331,88 @@ class ItemServiceTest {
             ));
         }
     }
+
+
+    @Test
+    void updateItem_itemNotFound_skipsOldImageDeletion() throws IOException {
+        
+        Item inputItem = new Item();
+        inputItem.setItemId("I999"); 
+        
+        when(multipartFile.isEmpty()).thenReturn(false);
+        when(multipartFile.getOriginalFilename()).thenReturn("new.jpg");
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("data".getBytes()));
+        
+        when(itemRepository.findById("I999")).thenReturn(Optional.empty());
+        when(itemRepository.save(any(Item.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        try (MockedStatic<Files> filesMock = mockStatic(Files.class);
+             MockedStatic<Paths> pathsMock = mockStatic(Paths.class)) {
+            
+            Path mockPath = mock(Path.class);
+            pathsMock.when(() -> Paths.get("uploads")).thenReturn(mockPath);
+            when(mockPath.resolve(anyString())).thenReturn(mockPath);
+            filesMock.when(() -> Files.exists(mockPath)).thenReturn(true); 
+
+            itemService.updateItem(inputItem, multipartFile);
+            filesMock.verify(() -> Files.deleteIfExists(any()), never());
+        }
+    }
+
+    @Test
+    void updateItem_oldImageIsNull_skipsDeletion() throws IOException {
+        
+        Item inputItem = new Item();
+        inputItem.setItemId("I001");
+        
+        Item existingDbItem = new Item();
+        existingDbItem.setItemId("I001");
+        existingDbItem.setItemImage(null); 
+
+        when(itemRepository.findById("I001")).thenReturn(Optional.of(existingDbItem));
+        when(itemRepository.save(any(Item.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        when(multipartFile.isEmpty()).thenReturn(false);
+        when(multipartFile.getOriginalFilename()).thenReturn("new.jpg");
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("data".getBytes()));
+
+        try (MockedStatic<Files> filesMock = mockStatic(Files.class);
+             MockedStatic<Paths> pathsMock = mockStatic(Paths.class)) {
+            
+            Path mockPath = mock(Path.class);
+            pathsMock.when(() -> Paths.get("uploads")).thenReturn(mockPath);
+            when(mockPath.resolve(anyString())).thenReturn(mockPath);
+            filesMock.when(() -> Files.exists(mockPath)).thenReturn(true);
+
+            itemService.updateItem(inputItem, multipartFile);
+
+            filesMock.verify(() -> Files.deleteIfExists(any()), never());
+        }
+    }
+
+    @Test
+    void createItem_uploadDirectoryAlreadyExists_skipsDirectoryCreation() throws IOException {
+        
+        try (MockedStatic<Files> filesMock = mockStatic(Files.class);
+             MockedStatic<Paths> pathsMock = mockStatic(Paths.class)) {
+
+            Path mockPath = mock(Path.class);
+            pathsMock.when(() -> Paths.get("uploads")).thenReturn(mockPath);
+            when(mockPath.resolve(anyString())).thenReturn(mockPath);
+
+            filesMock.when(() -> Files.exists(mockPath)).thenReturn(true);
+
+            when(multipartFile.isEmpty()).thenReturn(false);
+            when(multipartFile.getOriginalFilename()).thenReturn("test.jpg");
+            when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("data".getBytes()));
+
+            Item inputItem = new Item();
+            when(itemRepository.save(any(Item.class))).thenAnswer(i -> i.getArguments()[0]);
+
+            itemService.createItem(inputItem, multipartFile);
+
+            filesMock.verify(() -> Files.createDirectories(mockPath), never());
+            filesMock.verify(() -> Files.copy(any(ByteArrayInputStream.class), eq(mockPath), any()));
+        }
+    }
 }
